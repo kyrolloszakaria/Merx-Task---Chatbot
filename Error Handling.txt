@@ -1,0 +1,19 @@
+1. Input Validation:
+    Password requirements (length, complexity)
+    Name validation (length, no empty strings)
+    Email validation (format and uniqueness)
+    Field descriptions and constraints using Pydantic
+2. Error Handling:
+    Custom exception classes for different error types
+    Global exception handlers for consistent error responses
+    Database error handling with rollbacks
+    Proper HTTP status codes
+3. Security:
+    Password hashing using bcrypt
+    Email uniqueness check
+    Proper separation of password hash from response
+4. Code Organization:
+    Service layer for business logic
+    Clear separation of concerns
+    Detailed API documentation
+    Type hints throughout the code
