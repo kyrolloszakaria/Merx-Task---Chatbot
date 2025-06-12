@@ -1,6 +1,6 @@
 from datetime import datetime
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, Enum, JSON, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Enum, JSON, Text, ForeignKey, Boolean, Float
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -8,6 +8,18 @@ from .database import Base
 class MessageDirection(enum.Enum):
     INCOMING = "incoming"  # From user to bot
     OUTGOING = "outgoing"  # From bot to user
+
+class Intent(enum.Enum):
+    GREETING = "greeting"
+    PRODUCT_SEARCH = "product_search"
+    ORDER_STATUS = "order_status"
+    HELP = "help"
+    UNKNOWN = "unknown"
+
+class FunctionCallStatus(enum.Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 class Conversation(Base):
     __tablename__ = "conversations"
@@ -17,6 +29,7 @@ class Conversation(Base):
     started_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime, nullable=True)
     context = Column(JSON, nullable=True)
+    active = Column(Boolean, default=True)
 
     # Relationships
     user = relationship("User", back_populates="conversations")
@@ -30,7 +43,8 @@ class Message(Base):
     content = Column(Text, nullable=False)
     direction = Column(Enum(MessageDirection), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    intent = Column(String(100), nullable=True)
+    intent = Column(Enum(Intent), nullable=True)
+    confidence_score = Column(Float, nullable=True)
     function_calls = Column(JSON, nullable=True)
     message_metadata = Column(JSON, nullable=True)
 
@@ -46,7 +60,8 @@ class FunctionCall(Base):
     function_name = Column(String(255), nullable=False)
     parameters = Column(JSON, nullable=True)
     result = Column(JSON, nullable=True)
-    status = Column(String(50), nullable=False)
+    status = Column(Enum(FunctionCallStatus), nullable=False, default=FunctionCallStatus.PENDING)
+    error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
 

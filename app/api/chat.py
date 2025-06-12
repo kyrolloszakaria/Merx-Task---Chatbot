@@ -1,38 +1,65 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import Dict, Any
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
 
-from app.core.chatbot import Chatbot, ChatResponse
+from app.models.database import get_db
+from app.schemas.chat import (
+    MessageCreate,
+    MessageResponse,
+    ConversationCreate,
+    ConversationResponse,
+    ChatTurnResponse
+)
+from app.services.chat import ChatService
 
 router = APIRouter()
-chatbot = Chatbot()
 
-class ChatRequest(BaseModel):
-    message: str
-    context: Dict[str, Any] = {}
+@router.post("/conversations/", response_model=ConversationResponse)
+def create_conversation(
+    conversation: ConversationCreate,
+    db: Session = Depends(get_db)
+):
+    """
+    Start a new conversation.
+    """
+    chat_service = ChatService(db)
+    return chat_service.create_conversation(conversation)
 
-@router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+@router.get("/conversations/{conversation_id}", response_model=ConversationResponse)
+def get_conversation(
+    conversation_id: int,
+    db: Session = Depends(get_db)
+):
     """
-    Process a chat message and return a response
+    Get a conversation by ID with all its messages.
     """
-    try:
-        response = await chatbot.process_message(request.message)
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    chat_service = ChatService(db)
+    return chat_service.get_conversation(conversation_id)
 
-@router.get("/history")
-async def get_history():
+@router.post("/conversations/{conversation_id}/messages/", response_model=ChatTurnResponse)
+def send_message(
+    conversation_id: int,
+    message: MessageCreate,
+    db: Session = Depends(get_db)
+):
     """
-    Get the conversation history
+    Send a message in a conversation.
+    The service will:
+    1. Detect the message intent
+    2. Generate an appropriate response
+    3. Make function calls if needed
     """
-    return {"history": chatbot.conversation_history}
+    chat_service = ChatService(db)
+    user_msg, bot_msg = chat_service.send_message(conversation_id, message)
+    return ChatTurnResponse(user_message=user_msg, bot_message=bot_msg)
 
-@router.delete("/history")
-async def clear_history():
+@router.post("/conversations/{conversation_id}/end", response_model=ConversationResponse)
+def end_conversation(
+    conversation_id: int,
+    db: Session = Depends(get_db)
+):
     """
-    Clear the conversation history
+    End a conversation.
     """
-    chatbot.conversation_history.clear()
-    return {"message": "Conversation history cleared"} 
+    chat_service = ChatService(db)
+    return chat_service.end_conversation(conversation_id) 

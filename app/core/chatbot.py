@@ -1,5 +1,6 @@
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
+from app.services.nlu import NLUService
 
 class Message(BaseModel):
     role: str
@@ -14,6 +15,7 @@ class Chatbot:
     def __init__(self):
         self.conversation_history: List[Message] = []
         self.available_functions: Dict[str, Any] = {}
+        self.nlu = NLUService()
 
     async def process_message(self, message: str) -> ChatResponse:
         """
@@ -42,9 +44,11 @@ class Chatbot:
 
     def _detect_intent(self, message: str) -> Optional[str]:
         """
-        Detect the intent of the user message
+        Detect the intent of the user message using the NLUService.
         """
-        # TODO: Implement proper intent detection
+        intent, confidence = self.nlu.detect_intent(message)
+        if intent is not None and confidence >= 0.5:
+            return intent.value  # Return the string value of the Enum
         return None
 
     def _handle_function_call(self, intent: Optional[str], message: str) -> Optional[Dict[str, Any]]:
