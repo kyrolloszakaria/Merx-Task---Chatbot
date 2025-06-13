@@ -17,3 +17,17 @@
     Clear separation of concerns
     Detailed API documentation
     Type hints throughout the code
+
+
+
+------
+Project Structure:
+app/ - Main application directory
+api/ - API routes and endpoints
+core/ - Core functionality and exceptions
+db/ - Database configuration
+models/ - SQLAlchemy database models
+schemas/ - Pydantic schemas for request/response validation
+services/ - Business logic and services (including NLU)
+config.py - Application configuration
+main.py - Application entry point

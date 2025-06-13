@@ -1,19 +1,30 @@
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any, List
 from datetime import datetime
+from passlib.context import CryptContext
+import logging
 
 from app.models.conversations import (
     Conversation, Message, FunctionCall,
     MessageDirection, Intent, FunctionCallStatus
 )
+from app.models.users import User
 from app.schemas.chat import MessageCreate, ConversationCreate
-from app.core.exceptions import ResourceNotFoundError
+from app.schemas.users import UserCreate
+from app.core.exceptions import ResourceNotFoundError, UserAlreadyExistsError
 from app.services.nlu import NLUService
+from app.services.users import UserService
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ChatService:
     def __init__(self, db: Session):
         self.db = db
         self.nlu = NLUService()
+        self.user_service = UserService(db)
+        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     def detect_intent_and_params(self, message: str) -> tuple[Intent, float, Dict[str, Any]]:
         # Use NLU service to detect intent
@@ -40,6 +51,15 @@ class ChatService:
                 "description": "Get the status of an order",
                 "parameters": {
                     "order_id": "integer"
+                }
+            },
+            Intent.REGISTER_USER: {
+                "name": "create_user",
+                "description": "Create a new user account",
+                "parameters": {
+                    "name": "string",
+                    "email": "string",
+                    "password": "string"
                 }
             }
         }
@@ -69,6 +89,10 @@ class ChatService:
         # Detect intent and extract parameters
         intent, confidence, params = self.detect_intent_and_params(message_data.content)
         
+        # Log the detected intent and parameters
+        logger.info(f"Detected intent: {intent} with confidence: {confidence}")
+        logger.info(f"Extracted parameters: {params}")
+        
         # Create user message
         user_message = Message(
             conversation_id=conversation_id,
@@ -90,14 +114,51 @@ class ChatService:
         
         # Check if we need to make a function call
         function_info = self.get_function_for_intent(intent)
-        if function_info:
-            function_call = FunctionCall(
-                message_id=user_message.id,
-                function_name=function_info["name"],
-                parameters=params,
-                status=FunctionCallStatus.PENDING
-            )
-            self.db.add(function_call)
+        if function_info and all(params.get(param) for param in function_info["parameters"].keys()):
+            try:
+                # Execute the function based on intent
+                if intent == Intent.REGISTER_USER:
+                    logger.info(f"Creating user with parameters: {params}")
+                    user_data = UserCreate(
+                        name=params['name'],
+                        email=params['email'],
+                        password=params['password']
+                    )
+                    user = self.user_service.create_user(user_data)
+                    logger.info(f"User created successfully with ID: {user.id}")
+                    function_result = {"user_id": user.id, "email": user.email}
+                    status = FunctionCallStatus.COMPLETED
+                else:
+                    # Handle other function calls here
+                    function_result = None
+                    status = FunctionCallStatus.PENDING
+
+                function_call = FunctionCall(
+                    message_id=user_message.id,
+                    function_name=function_info["name"],
+                    parameters=params,
+                    result=function_result,
+                    status=status,
+                    completed_at=datetime.utcnow() if status == FunctionCallStatus.COMPLETED else None
+                )
+                self.db.add(function_call)
+
+                # Update bot message if function was successful
+                if status == FunctionCallStatus.COMPLETED:
+                    if intent == Intent.REGISTER_USER:
+                        bot_message.content = f"Great! Your account has been created successfully. Welcome, {user.name}!"
+            except Exception as e:
+                logger.error(f"Error during function call: {str(e)}")
+                function_call = FunctionCall(
+                    message_id=user_message.id,
+                    function_name=function_info["name"],
+                    parameters=params,
+                    status=FunctionCallStatus.FAILED,
+                    error_message=str(e),
+                    completed_at=datetime.utcnow()
+                )
+                self.db.add(function_call)
+                bot_message.content = f"I'm sorry, there was an error: {str(e)}"
         
         self.db.commit()
         self.db.refresh(user_message)
@@ -123,6 +184,20 @@ class ChatService:
         
         elif intent == Intent.HELP:
             return "I'm here to help! You can ask me about products, check order status, or get general assistance."
+        
+        elif intent == Intent.REGISTER_USER:
+            missing_params = []
+            if not params.get('name'):
+                missing_params.append("name")
+            if not params.get('email'):
+                missing_params.append("email")
+            if not params.get('password'):
+                missing_params.append("password")
+            
+            if missing_params:
+                return f"To complete your registration, I need your {', '.join(missing_params)}. Could you please provide them?"
+            
+            return "I'll help you create your account. Let me process your registration..."
         
         return "I'm not sure I understand. Could you please rephrase that?"
 
