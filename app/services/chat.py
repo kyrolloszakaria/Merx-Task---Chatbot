@@ -53,13 +53,14 @@ class ChatService:
                     "order_id": "integer"
                 }
             },
-            Intent.REGISTER_USER: {
-                "name": "create_user",
-                "description": "Create a new user account",
+            Intent.MODIFY_USER: {
+                "name": "modify_user",
+                "description": "Update user account information",
                 "parameters": {
-                    "name": "string",
-                    "email": "string",
-                    "password": "string"
+                    "field": "string",  # name, email, or password
+                    "new_name": "string?",
+                    "new_email": "string?",
+                    "new_password": "string?"
                 }
             }
         }
@@ -85,11 +86,10 @@ class ChatService:
 
     def send_message(self, conversation_id: int, message_data: MessageCreate) -> Message:
         conversation = self.get_conversation(conversation_id)
+        self.conversation = conversation
         
         # Detect intent and extract parameters
         intent, confidence, params = self.detect_intent_and_params(message_data.content)
-        
-        # Log the detected intent and parameters
         logger.info(f"Detected intent: {intent} with confidence: {confidence}")
         logger.info(f"Extracted parameters: {params}")
         
@@ -114,19 +114,28 @@ class ChatService:
         
         # Check if we need to make a function call
         function_info = self.get_function_for_intent(intent)
-        if function_info and all(params.get(param) for param in function_info["parameters"].keys()):
+        if function_info and all(params.get(param) for param in [p for p, t in function_info["parameters"].items() if not t.endswith('?')]):
             try:
-                # Execute the function based on intent
-                if intent == Intent.REGISTER_USER:
-                    logger.info(f"Creating user with parameters: {params}")
-                    user_data = UserCreate(
-                        name=params['name'],
-                        email=params['email'],
-                        password=params['password']
-                    )
-                    user = self.user_service.create_user(user_data)
-                    logger.info(f"User created successfully with ID: {user.id}")
-                    function_result = {"user_id": user.id, "email": user.email}
+                if intent == Intent.MODIFY_USER:
+                    if not conversation.user_id:
+                        raise ValueError("You must be logged in to modify your account.")
+                    
+                    field = params['field']
+                    user = self.user_service.get_user(conversation.user_id)
+                    
+                    if field == 'name' and params.get('new_name'):
+                        user.name = params['new_name']
+                    elif field == 'email' and params.get('new_email'):
+                        # Check if email is already taken
+                        if self.user_service.get_user_by_email(params['new_email']):
+                            raise ValueError(f"Email {params['new_email']} is already in use.")
+                        user.email = params['new_email']
+                    elif field == 'password' and params.get('new_password'):
+                        # Hash the new password
+                        user.password_hash = self.user_service.pwd_context.hash(params['new_password'])
+                    
+                    self.db.add(user)
+                    function_result = {"field": field}
                     status = FunctionCallStatus.COMPLETED
                 else:
                     # Handle other function calls here
@@ -145,8 +154,13 @@ class ChatService:
 
                 # Update bot message if function was successful
                 if status == FunctionCallStatus.COMPLETED:
-                    if intent == Intent.REGISTER_USER:
-                        bot_message.content = f"Great! Your account has been created successfully. Welcome, {user.name}!"
+                    if intent == Intent.MODIFY_USER:
+                        field_messages = {
+                            'name': f"I've updated your name to {params['new_name']}.",
+                            'email': f"I've updated your email to {params['new_email']}.",
+                            'password': "I've updated your password."
+                        }
+                        bot_message.content = f"{field_messages[field]} Is there anything else you'd like to update?"
             except Exception as e:
                 logger.error(f"Error during function call: {str(e)}")
                 function_call = FunctionCall(
@@ -167,7 +181,8 @@ class ChatService:
 
     def generate_response(self, intent: Intent, message: str, params: Dict[str, Any]) -> str:
         if intent == Intent.GREETING:
-            return "Hello! How can I assist you today?"
+            return ("Hello! I'm your shopping assistant. I can help you browse products, check orders, "
+                   "and manage your account. What would you like to do?")
         
         elif intent == Intent.PRODUCT_SEARCH:
             category = params.get('category', 'products')
@@ -183,23 +198,36 @@ class ChatService:
             return "Could you please provide your order number?"
         
         elif intent == Intent.HELP:
-            return "I'm here to help! You can ask me about products, check order status, or get general assistance."
+            return ("I'm here to help! You can:\n"
+                   "- Browse products by saying 'show me products' or 'search for electronics'\n"
+                   "- Check order status by saying 'track my order #123'\n"
+                   "- Update your profile by saying things like:\n"
+                   "  • 'change my name to John'\n"
+                   "  • 'update my email to new@example.com'\n"
+                   "  • 'change my password'\n"
+                   "What would you like to do?")
         
-        elif intent == Intent.REGISTER_USER:
-            missing_params = []
-            if not params.get('name'):
-                missing_params.append("name")
-            if not params.get('email'):
-                missing_params.append("email")
-            if not params.get('password'):
-                missing_params.append("password")
+        elif intent == Intent.MODIFY_USER:
+            if not self.conversation.user_id:
+                return "You need to be logged in to modify your account. Would you like to log in first?"
             
-            if missing_params:
-                return f"To complete your registration, I need your {', '.join(missing_params)}. Could you please provide them?"
+            field = params.get('field')
+            if not field:
+                return ("What would you like to update? You can say things like:\n"
+                       "- Change my name to John\n"
+                       "- Update my email to new@example.com\n"
+                       "- Change my password to NewPass123!")
             
-            return "I'll help you create your account. Let me process your registration..."
+            if field == 'name' and not params.get('new_name'):
+                return "What would you like your new name to be?"
+            elif field == 'email' and not params.get('new_email'):
+                return "What email address would you like to use?"
+            elif field == 'password' and not params.get('new_password'):
+                return "Please provide your new password. Remember it must include uppercase, lowercase, numbers, and special characters."
+            
+            return f"I'll update your {field} for you..."
         
-        return "I'm not sure I understand. Could you please rephrase that?"
+        return "I'm not sure I understand. Could you please rephrase that or ask for help?"
 
     def end_conversation(self, conversation_id: int) -> Conversation:
         conversation = self.get_conversation(conversation_id)

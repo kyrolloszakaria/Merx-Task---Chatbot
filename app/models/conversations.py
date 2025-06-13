@@ -14,7 +14,7 @@ class Intent(enum.Enum):
     PRODUCT_SEARCH = "product_search"
     ORDER_STATUS = "order_status"
     HELP = "help"
-    REGISTER_USER = "register_user"
+    MODIFY_USER = "modify_user"
     LOGIN = "login"
     GENERAL_QUERY = "general_query"
     UNKNOWN = "unknown"

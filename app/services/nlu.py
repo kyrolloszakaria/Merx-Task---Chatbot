@@ -52,35 +52,17 @@ class NLUService:
                 "how to",
                 "guide me"
             ],
-            Intent.REGISTER_USER: [
-                "register",
-                "sign up",
-                "create account",
-                "new account",
-                "register user",
-                "create user",
-                "signup",
-                "create new account",
-                "register new user",
-                "create new user"
-            ],
-            Intent.LOGIN: [
-                "login",
-                "sign in",
-                "log in",
-                "authenticate",
-                "access my account",
-                "enter my account"
-            ],
-            Intent.GENERAL_QUERY: [
-                "what can you do",
-                "tell me about",
-                "explain",
-                "how does this work",
-                "what is this",
-                "what are the features",
-                "what services",
-                "tell me more"
+            Intent.MODIFY_USER: [
+                "update profile",
+                "modify account",
+                "change my details",
+                "update my information",
+                "edit profile",
+                "change password",
+                "update email",
+                "change email",
+                "update name",
+                "change name"
             ]
         }
 
@@ -129,7 +111,6 @@ class NLUService:
         if intent == Intent.PRODUCT_SEARCH:
             # Extract potential price mentions
             if any(word in text.lower() for word in ['under', 'below', 'max', 'less than']):
-                # Simple price extraction (could be improved with regex or NER)
                 words = text.split()
                 for i, word in enumerate(words):
                     if word.startswith('$'):
@@ -157,58 +138,48 @@ class NLUService:
                 elif word.isdigit() and len(word) >= 4:  # Assume it's an order number
                     params['order_id'] = int(word)
         
-        elif intent == Intent.REGISTER_USER:
-            # Extract email (simple pattern matching)
+        elif intent == Intent.MODIFY_USER:
+            # Determine what field to update
+            update_fields = {
+                'name': ['name', 'username'],
+                'email': ['email', 'mail'],
+                'password': ['password', 'pass']
+            }
+            
+            for field, keywords in update_fields.items():
+                if any(keyword in text.lower() for keyword in keywords):
+                    params['field'] = field
+                    break
+
+            # Extract email if present
             import re
             email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
             email_match = re.search(email_pattern, text)
             if email_match:
-                params['email'] = email_match.group()
+                params['new_email'] = email_match.group()
 
-            # Extract name (assuming it's mentioned with "name is" or "my name is")
+            # Extract name if present
             name_patterns = [
-                r'my name is (\w+)',
-                r'name is (\w+)',
-                r'call me (\w+)',
-                r'i am (\w+)'
+                r'to (\w+)',
+                r'name (?:to|as) (\w+)',
+                r'name (?:should be|will be) (\w+)'
             ]
             for pattern in name_patterns:
                 name_match = re.search(pattern, text.lower())
                 if name_match:
-                    params['name'] = name_match.group(1)
+                    params['new_name'] = name_match.group(1)
                     break
 
-            # Extract password (with support for special characters)
+            # Extract new password
             password_patterns = [
-                r'password is[:\s]([^\s,\.]+)',
-                r'password[:\s]([^\s,\.]+)',
-                r'pass[:\s]([^\s,\.]+)',
-                r'pwd[:\s]([^\s,\.]+)'
+                r'(?:new )?password (?:to|as|:)\s*([^\s,\.]+)',
+                r'(?:new )?pass (?:to|as|:)\s*([^\s,\.]+)',
+                r'change (?:it )?to\s*([^\s,\.]+)'
             ]
             for pattern in password_patterns:
                 pass_match = re.search(pattern, text, re.IGNORECASE)
                 if pass_match:
-                    params['password'] = pass_match.group(1)
-                    break
-
-        elif intent == Intent.LOGIN:
-            # Extract email
-            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-            email_match = re.search(email_pattern, text)
-            if email_match:
-                params['email'] = email_match.group()
-
-            # Extract password
-            password_patterns = [
-                r'password is[:\s]([^\s,\.]+)',
-                r'password[:\s]([^\s,\.]+)',
-                r'pass[:\s]([^\s,\.]+)',
-                r'pwd[:\s]([^\s,\.]+)'
-            ]
-            for pattern in password_patterns:
-                pass_match = re.search(pattern, text, re.IGNORECASE)
-                if pass_match:
-                    params['password'] = pass_match.group(1)
+                    params['new_password'] = pass_match.group(1)
                     break
         
         return params 

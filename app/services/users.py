@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 from typing import List, Optional
 
 from app.models.users import User, UserRole
-from app.schemas.users import UserCreate
+from app.schemas.users import UserCreate, UserModify
 from app.core.exceptions import UserAlreadyExistsError, ResourceNotFoundError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -32,6 +32,35 @@ class UserService:
             self.db.commit()
             self.db.refresh(db_user)
             return db_user
+        except IntegrityError:
+            self.db.rollback()
+            raise UserAlreadyExistsError(user_data.email)
+
+    def modify_user(self, user_id: int, user_data: UserModify) -> User:
+        # Get the user
+        user = self.get_user(user_id)
+        
+        try:
+            # Update email if provided
+            if user_data.email is not None:
+                # Check if new email is already taken by another user
+                existing_user = self.get_user_by_email(user_data.email)
+                if existing_user and existing_user.id != user_id:
+                    raise UserAlreadyExistsError(user_data.email)
+                user.email = user_data.email
+
+            # Update name if provided
+            if user_data.name is not None:
+                user.name = user_data.name
+
+            # Update password if provided
+            if user_data.password is not None:
+                user.password_hash = pwd_context.hash(user_data.password)
+
+            self.db.add(user)
+            self.db.commit()
+            self.db.refresh(user)
+            return user
         except IntegrityError:
             self.db.rollback()
             raise UserAlreadyExistsError(user_data.email)

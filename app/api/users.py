@@ -4,7 +4,7 @@ from typing import List
 
 from app.models.database import get_db
 from app.models.users import User, UserRole
-from app.schemas.users import UserCreate, UserResponse
+from app.schemas.users import UserCreate, UserResponse, UserModify
 from app.services.users import UserService
 
 router = APIRouter()
@@ -24,6 +24,23 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """
     user_service = UserService(db)
     return user_service.create_user(user)
+
+@router.patch("/{user_id}", response_model=UserResponse)
+def modify_user(
+    user_id: int,
+    user_data: UserModify,
+    db: Session = Depends(get_db)
+):
+    """
+    Modify an existing user's information.
+    You can update any combination of:
+    - Name (2-100 characters)
+    - Email (must be valid and unique)
+    - Password (same requirements as creation)
+    Only the provided fields will be updated.
+    """
+    user_service = UserService(db)
+    return user_service.modify_user(user_id, user_data)
 
 @router.get("/", response_model=List[UserResponse])
 def get_users(
