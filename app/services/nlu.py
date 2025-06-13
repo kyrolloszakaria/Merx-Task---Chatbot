@@ -3,6 +3,7 @@ import torch
 from typing import Tuple, Dict, List
 import numpy as np
 from app.models.conversations import Intent
+import logging
 
 _classifier = None
 
@@ -106,6 +107,10 @@ class NLUService:
         This is a simple implementation that could be enhanced with
         named entity recognition (NER) models.
         """
+        # Initialize logger
+        logger = logging.getLogger(__name__)
+        
+        # Initialize params dictionary
         params = {}
         
         if intent == Intent.PRODUCT_SEARCH:
@@ -139,35 +144,35 @@ class NLUService:
                     params['order_id'] = int(word)
         
         elif intent == Intent.MODIFY_USER:
-            # Determine what field to update
+            # Determine what fields to update
             update_fields = {
                 'name': ['name', 'username'],
-                'email': ['email', 'mail'],
-                'password': ['password', 'pass']
+                'email': ['email', 'mail', 'e-mail'],
+                'password': ['password', 'pass', 'passkey']
             }
             
-            for field, keywords in update_fields.items():
-                if any(keyword in text.lower() for keyword in keywords):
-                    params['field'] = field
-                    break
-
+            # Initialize user_data structure
+            user_data = {}
+            
             # Extract email if present
             import re
             email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
             email_match = re.search(email_pattern, text)
             if email_match:
-                params['new_email'] = email_match.group()
+                user_data['email'] = email_match.group()
+                logger.info(f"Email found: {user_data['email']}")
+            else:
+                logger.info(f"Email not found")
 
             # Extract name if present
             name_patterns = [
-                r'to (\w+)',
                 r'name (?:to|as) (\w+)',
                 r'name (?:should be|will be) (\w+)'
             ]
             for pattern in name_patterns:
                 name_match = re.search(pattern, text.lower())
                 if name_match:
-                    params['new_name'] = name_match.group(1)
+                    user_data['name'] = name_match.group(1)
                     break
 
             # Extract new password
@@ -179,7 +184,11 @@ class NLUService:
             for pattern in password_patterns:
                 pass_match = re.search(pattern, text, re.IGNORECASE)
                 if pass_match:
-                    params['new_password'] = pass_match.group(1)
+                    user_data['password'] = pass_match.group(1)
                     break
+            
+            # Only include user_data if we found any fields to update
+            if user_data:
+                params['user_data'] = user_data
         
         return params 

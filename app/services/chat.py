@@ -10,7 +10,7 @@ from app.models.conversations import (
 )
 from app.models.users import User
 from app.schemas.chat import MessageCreate, ConversationCreate
-from app.schemas.users import UserCreate
+from app.schemas.users import UserCreate, UserModify
 from app.core.exceptions import ResourceNotFoundError, UserAlreadyExistsError
 from app.services.nlu import NLUService
 from app.services.users import UserService
@@ -26,14 +26,37 @@ class ChatService:
         self.user_service = UserService(db)
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    def detect_intent_and_params(self, message: str) -> tuple[Intent, float, Dict[str, Any]]:
-        # Use NLU service to detect intent
-        intent, confidence = self.nlu.detect_intent(message)
+    def update_conversation_context(self, conversation: Conversation, intent: Intent, params: Dict[str, Any] = None) -> None:
+        """Update the conversation context with the current intent and parameters"""
+        if intent != Intent.UNKNOWN:
+            context = {
+                'current_intent': intent.value,
+                'params': params or {},
+                'updated_at': datetime.utcnow().isoformat()
+            }
+            conversation.context = context
+            self.db.add(conversation)
+            self.db.commit()
+    
+    def clear_conversation_context(self, conversation: Conversation) -> None:
+        """Clear the conversation context"""
+        conversation.context = None
+        self.db.add(conversation)
+        self.db.commit()
+
+    def get_current_context(self, conversation: Conversation) -> Optional[Dict[str, Any]]:
+        """Get the current conversation context"""
+        if not conversation.context:
+            return None
         
-        # Extract parameters based on detected intent
-        params = self.nlu.extract_parameters(message, intent)
+        # Check if context is too old (e.g., more than 5 minutes)
+        if conversation.context.get('updated_at'):
+            last_update = datetime.fromisoformat(conversation.context['updated_at'])
+            if (datetime.utcnow() - last_update).total_seconds() > 300:  # 5 minutes
+                self.clear_conversation_context(conversation)
+                return None
         
-        return intent, confidence, params
+        return conversation.context
 
     def get_function_for_intent(self, intent: Intent) -> Optional[Dict[str, Any]]:
         intent_to_function = {
@@ -57,10 +80,12 @@ class ChatService:
                 "name": "modify_user",
                 "description": "Update user account information",
                 "parameters": {
-                    "field": "string",  # name, email, or password
-                    "new_name": "string?",
-                    "new_email": "string?",
-                    "new_password": "string?"
+                    "user_id": "integer",
+                    "user_data": {
+                        "name": "string?",
+                        "email": "string?",
+                        "password": "string?"
+                    }
                 }
             }
         }
@@ -88,10 +113,36 @@ class ChatService:
         conversation = self.get_conversation(conversation_id)
         self.conversation = conversation
         
+        # Get current context
+        current_context = self.get_current_context(conversation)
+        
         # Detect intent and extract parameters
-        intent, confidence, params = self.detect_intent_and_params(message_data.content)
+        intent, confidence = self.nlu.detect_intent(message_data.content)
         logger.info(f"Detected intent: {intent} with confidence: {confidence}")
-        logger.info(f"Extracted parameters: {params}")
+        params = self.nlu.extract_parameters(message_data.content, intent)
+
+        # Handle context and low confidence cases
+        if confidence < 0.3 and current_context:
+            stored_intent = Intent(current_context.get('current_intent'))
+            # Check if we're in the middle of a multi-step interaction
+            if stored_intent in [Intent.MODIFY_USER, Intent.PRODUCT_SEARCH, Intent.ORDER_STATUS]:
+                intent = stored_intent
+                # Merge current parameters with context parameters
+                context_params = current_context.get('params', {})
+                params = self.nlu.extract_parameters(message_data.content, intent)
+                logger.info(f"Extracted parameters: {params}")
+                params = {**context_params, **params}
+                logger.info(f"Merged parameters: {params}")
+                # Keep the existing context since we're continuing the conversation
+                conversation.context = current_context
+                self.db.add(conversation)
+            else:
+                # If stored intent isn't for multi-step interaction, treat as unknown
+                intent = Intent.UNKNOWN
+        
+        # Update conversation context for new intents
+        if intent != Intent.UNKNOWN:
+            self.update_conversation_context(conversation, intent, params)
         
         # Create user message
         user_message = Message(
@@ -103,45 +154,74 @@ class ChatService:
         )
         self.db.add(user_message)
         
-        # Generate bot response
-        response_content = self.generate_response(intent, message_data.content, params)
+        # Create bot message
         bot_message = Message(
             conversation_id=conversation_id,
-            content=response_content,
+            content="",  # We'll set this later
             direction=MessageDirection.OUTGOING
         )
-        self.db.add(bot_message)
         
         # Check if we need to make a function call
         function_info = self.get_function_for_intent(intent)
-        if function_info and all(params.get(param) for param in [p for p, t in function_info["parameters"].items() if not t.endswith('?')]):
+        if function_info:
             try:
                 if intent == Intent.MODIFY_USER:
                     if not conversation.user_id:
                         raise ValueError("You must be logged in to modify your account.")
                     
-                    field = params['field']
-                    user = self.user_service.get_user(conversation.user_id)
+                    # Add user_id to params
+                    params['user_id'] = conversation.user_id
                     
-                    if field == 'name' and params.get('new_name'):
-                        user.name = params['new_name']
-                    elif field == 'email' and params.get('new_email'):
-                        # Check if email is already taken
-                        if self.user_service.get_user_by_email(params['new_email']):
-                            raise ValueError(f"Email {params['new_email']} is already in use.")
-                        user.email = params['new_email']
-                    elif field == 'password' and params.get('new_password'):
-                        # Hash the new password
-                        user.password_hash = self.user_service.pwd_context.hash(params['new_password'])
+                    user_data = params.get('user_data', {})
+                    if not user_data:
+                        # here we should ask for the fields to update
+                        bot_message.content = "What fields would you like to update?"
+                        self.db.add(bot_message)
+                        self.db.commit()
+                        self.db.refresh(bot_message)
+                        self.db.refresh(user_message)
+                        return user_message, bot_message
                     
-                    self.db.add(user)
-                    function_result = {"field": field}
-                    status = FunctionCallStatus.COMPLETED
+                    # Create UserModify object with the fields to update
+                    user_data = UserModify(**user_data)
+                    
+                    # Call the user service to update the user
+                    try:
+                        updated_user = self.user_service.modify_user(conversation.user_id, user_data)
+                        updated_fields = [field for field in ['name', 'email', 'password'] 
+                                       if getattr(user_data, field) is not None]
+                        
+                        function_result = {"updated_fields": updated_fields}
+                        status = FunctionCallStatus.COMPLETED if updated_fields else FunctionCallStatus.FAILED
+
+                        # Update bot message with multi-field response
+                        if status == FunctionCallStatus.COMPLETED:
+                            field_messages = []
+                            for field in updated_fields:
+                                if field == 'name':
+                                    field_messages.append(f"name to {user_data.name}")
+                                elif field == 'email':
+                                    field_messages.append(f"email to {user_data.email}")
+                                elif field == 'password':
+                                    field_messages.append("password")
+                            
+                            if len(field_messages) == 1:
+                                bot_message.content = f"I've updated your {field_messages[0]}."
+                            elif len(field_messages) == 2:
+                                bot_message.content = f"I've updated your {field_messages[0]} and {field_messages[1]}."
+                            else:
+                                last_field = field_messages.pop()
+                                bot_message.content = f"I've updated your {', '.join(field_messages)}, and {last_field}."
+                            
+                            bot_message.content += " Is there anything else you'd like to update?"
+                            self.db.add(bot_message)
+                    except UserAlreadyExistsError as e:
+                        raise ValueError(str(e))
                 else:
                     # Handle other function calls here
                     function_result = None
                     status = FunctionCallStatus.PENDING
-
+                # create function call object and add to db
                 function_call = FunctionCall(
                     message_id=user_message.id,
                     function_name=function_info["name"],
@@ -151,16 +231,6 @@ class ChatService:
                     completed_at=datetime.utcnow() if status == FunctionCallStatus.COMPLETED else None
                 )
                 self.db.add(function_call)
-
-                # Update bot message if function was successful
-                if status == FunctionCallStatus.COMPLETED:
-                    if intent == Intent.MODIFY_USER:
-                        field_messages = {
-                            'name': f"I've updated your name to {params['new_name']}.",
-                            'email': f"I've updated your email to {params['new_email']}.",
-                            'password': "I've updated your password."
-                        }
-                        bot_message.content = f"{field_messages[field]} Is there anything else you'd like to update?"
             except Exception as e:
                 logger.error(f"Error during function call: {str(e)}")
                 function_call = FunctionCall(
@@ -174,25 +244,49 @@ class ChatService:
                 self.db.add(function_call)
                 bot_message.content = f"I'm sorry, there was an error: {str(e)}"
         
+        # Generate bot response
+        response_content = self.generate_response(intent, message_data.content, params, current_context, bot_message.content)
+        bot_message.content = response_content
+
+        self.db.add(bot_message)
         self.db.commit()
         self.db.refresh(user_message)
         self.db.refresh(bot_message)
         return user_message, bot_message
 
-    def generate_response(self, intent: Intent, message: str, params: Dict[str, Any]) -> str:
+    def generate_response(self, intent: Intent, message: str, params: Dict[str, Any], context: Optional[Dict[str, Any]] = None, msg_content: str = None) -> str:
+        if msg_content:
+            return msg_content
         if intent == Intent.GREETING:
+            # Clear context on greeting
+            if self.conversation:
+                self.clear_conversation_context(self.conversation)
             return ("Hello! I'm your shopping assistant. I can help you browse products, check orders, "
                    "and manage your account. What would you like to do?")
         
         elif intent == Intent.PRODUCT_SEARCH:
             category = params.get('category', 'products')
             max_price = params.get('max_price')
+            
+            # If we're in product search context but missing parameters
+            if context and context.get('current_intent') == Intent.PRODUCT_SEARCH.value:
+                if not category and not max_price:
+                    return ("What kind of products are you looking for? You can specify:\n"
+                           "- A category (e.g., electronics, clothing, books)\n"
+                           "- A price range (e.g., under $100)\n"
+                           "- Or both!")
+            
             if max_price:
                 return f"I'll help you find {category} under ${max_price}. Let me search our catalog..."
             return f"I'll help you find {category}. Let me search our catalog..."
         
         elif intent == Intent.ORDER_STATUS:
             order_id = params.get('order_id')
+            
+            # If we're in order status context but missing order ID
+            if not order_id and context and context.get('current_intent') == Intent.ORDER_STATUS.value:
+                return "Could you please provide your order number? It should be a number like #1234"
+            
             if order_id:
                 return f"Let me check the status of order #{order_id}..."
             return "Could you please provide your order number?"
@@ -211,21 +305,29 @@ class ChatService:
             if not self.conversation.user_id:
                 return "You need to be logged in to modify your account. Would you like to log in first?"
             
-            field = params.get('field')
-            if not field:
+            fields = params.get('fields', [])
+            
+            # If no fields specified but we're in MODIFY_USER context
+            if not fields and context and context.get('current_intent') == Intent.MODIFY_USER.value:
                 return ("What would you like to update? You can say things like:\n"
                        "- Change my name to John\n"
                        "- Update my email to new@example.com\n"
                        "- Change my password to NewPass123!")
             
-            if field == 'name' and not params.get('new_name'):
-                return "What would you like your new name to be?"
-            elif field == 'email' and not params.get('new_email'):
-                return "What email address would you like to use?"
-            elif field == 'password' and not params.get('new_password'):
-                return "Please provide your new password. Remember it must include uppercase, lowercase, numbers, and special characters."
+            # Check for missing values for specified fields
+            for field in fields:
+                if field == 'name' and not params.get('new_name'):
+                    return "What would you like your new name to be?"
+                elif field == 'email' and not params.get('new_email'):
+                    return "What email address would you like to use?"
+                elif field == 'password' and not params.get('new_password'):
+                    return "Please provide your new password. Remember it must include uppercase, lowercase, numbers, and special characters."
             
-            return f"I'll update your {field} for you..."
+            # If we have fields but no values yet, maintain context
+            if fields and not any(params.get(f'new_{field}') for field in fields):
+                return f"What would you like your new {fields[0]} to be?"
+            
+            return f"I'll update your profile information..."
         
         return "I'm not sure I understand. Could you please rephrase that or ask for help?"
 
