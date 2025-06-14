@@ -4,8 +4,12 @@ from typing import Tuple, Dict, List
 import numpy as np
 from app.models.conversations import Intent
 import logging
+import spacy
+import re
+from typing import Optional
 
 _classifier = None
+_nlp = None
 
 def get_classifier():
     global _classifier
@@ -17,13 +21,25 @@ def get_classifier():
         )
     return _classifier
 
+def get_spacy_model():
+    global _nlp
+    if _nlp is None:
+        _nlp = spacy.load("en_core_web_sm")
+    return _nlp
+
 def warmup_nlu():
+    # Warmup transformer model
     classifier = get_classifier()
     classifier("warmup", candidate_labels=["test"])
+    
+    # Warmup spaCy model
+    nlp = get_spacy_model()
+    nlp("Warmup text to ensure the model is loaded")
 
 class NLUService:
     def __init__(self):
         self.classifier = get_classifier()
+        self.nlp = get_spacy_model()
         
         # Expanded candidate labels for better matching
         self.intent_labels = {
@@ -88,12 +104,12 @@ class NLUService:
         best_label = result['labels'][0]
         confidence = result['scores'][0]
         
-        # Lowered threshold to 0.3
-        if confidence < 0.3:
+        # Lowered threshold to 0.2
+        if confidence < 0.2:
             # Fallback: simple keyword match
             for label, intent in label_to_intent.items():
                 if label in text.lower():
-                    return intent, 0.3
+                    return intent, 0.2
             return Intent.UNKNOWN, confidence
             
         # Map the label back to our Intent enum
@@ -103,9 +119,8 @@ class NLUService:
 
     def extract_parameters(self, text: str, intent: Intent) -> Dict:
         """
-        Extract relevant parameters from the text based on the intent.
-        This is a simple implementation that could be enhanced with
-        named entity recognition (NER) models.
+        Extract relevant parameters from the text using NER and pattern matching.
+        Uses spaCy for named entity recognition and custom patterns for specific fields.
         """
         # Initialize logger
         logger = logging.getLogger(__name__)
@@ -113,82 +128,151 @@ class NLUService:
         # Initialize params dictionary
         params = {}
         
+        # Process text with spaCy
+        doc = self.nlp(text)
+        
         if intent == Intent.PRODUCT_SEARCH:
-            # Extract potential price mentions
-            if any(word in text.lower() for word in ['under', 'below', 'max', 'less than']):
-                words = text.split()
-                for i, word in enumerate(words):
-                    if word.startswith('$'):
-                        try:
-                            params['max_price'] = float(word[1:])
-                        except ValueError:
-                            pass
+            # Extract price using both NER and pattern matching
+            price = self._extract_price(text, doc)
+            if price is not None:
+                params['max_price'] = price
             
-            # Extract potential category mentions
-            categories = ['electronics', 'clothing', 'books', 'food', 'furniture']
-            for category in categories:
-                if category in text.lower():
-                    params['category'] = category
-                    break
+            # Extract category using both NER and custom matching
+            category = self._extract_category(text, doc)
+            if category:
+                params['category'] = category
         
         elif intent == Intent.ORDER_STATUS:
-            # Try to extract order number
-            words = text.split()
-            for i, word in enumerate(words):
-                if word.startswith('#'):
-                    try:
-                        params['order_id'] = int(word[1:])
-                    except ValueError:
-                        pass
-                elif word.isdigit() and len(word) >= 4:  # Assume it's an order number
-                    params['order_id'] = int(word)
+            # Extract order number using pattern matching and NER
+            order_id = self._extract_order_id(text, doc)
+            if order_id:
+                params['order_id'] = order_id
         
         elif intent == Intent.MODIFY_USER:
-            # Determine what fields to update
-            update_fields = {
-                'name': ['name', 'username'],
-                'email': ['email', 'mail', 'e-mail'],
-                'password': ['password', 'pass', 'passkey']
-            }
-            
-            # Initialize user_data structure
-            user_data = {}
-            
-            # Extract email if present
-            import re
-            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-            email_match = re.search(email_pattern, text)
-            if email_match:
-                user_data['email'] = email_match.group()
-                logger.info(f"Email found: {user_data['email']}")
-            else:
-                logger.info(f"Email not found")
+            # Extract user data using combined NER and pattern matching
+            user_data = self._extract_user_data(text, doc)
+            if user_data:
+                params['user_data'] = user_data
+        
+        return params
 
-            # Extract name if present
+    def _extract_price(self, text: str, doc: spacy.tokens.Doc) -> Optional[float]:
+        """Extract price from text using both NER and pattern matching."""
+        # Try NER first
+        for ent in doc.ents:
+            if ent.label_ == "MONEY":
+                # Extract number from money entity
+                amount = re.findall(r'\d+\.?\d*', ent.text)
+                if amount:
+                    return float(amount[0])
+        
+        # Fallback to pattern matching
+        price_patterns = [
+            r'\$\s*(\d+\.?\d*)',
+            r'(\d+\.?\d*)\s*dollars',
+            r'under\s*\$?\s*(\d+\.?\d*)',
+            r'below\s*\$?\s*(\d+\.?\d*)',
+        ]
+        
+        for pattern in price_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return float(match.group(1))
+        
+        return None
+
+    def _extract_category(self, text: str, doc: spacy.tokens.Doc) -> Optional[str]:
+        """Extract product category using NER and custom matching."""
+        # Predefined categories
+        categories = {
+            'electronics': ['electronics', 'gadgets', 'devices', 'phones', 'computers'],
+            'clothing': ['clothing', 'clothes', 'apparel', 'fashion', 'wear'],
+            'books': ['books', 'novels', 'textbooks', 'magazines'],
+            'food': ['food', 'groceries', 'snacks', 'drinks'],
+            'furniture': ['furniture', 'chairs', 'tables', 'sofas']
+        }
+        
+        # Check NER results
+        for ent in doc.ents:
+            if ent.label_ == "PRODUCT":
+                # Map entity to category
+                for category, keywords in categories.items():
+                    if any(keyword in ent.text.lower() for keyword in keywords):
+                        return category
+        
+        # Fallback to keyword matching
+        text_lower = text.lower()
+        for category, keywords in categories.items():
+            if any(keyword in text_lower for keyword in keywords):
+                return category
+        
+        return None
+
+    def _extract_order_id(self, text: str, doc: spacy.tokens.Doc) -> Optional[int]:
+        """Extract order ID using pattern matching and NER."""
+        # Try pattern matching first
+        patterns = [
+            r'order\s*#?\s*(\d{4,})',
+            r'#\s*(\d{4,})',
+            r'order\s*number\s*(\d{4,})',
+            r'order\s*id\s*(\d{4,})'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return int(match.group(1))
+        
+        # Try NER as fallback
+        for ent in doc.ents:
+            if ent.label_ == "CARDINAL":
+                number = re.findall(r'\d{4,}', ent.text)
+                if number:
+                    return int(number[0])
+        
+        return None
+
+    def _extract_user_data(self, text: str, doc: spacy.tokens.Doc) -> Dict:
+        """Extract user data using NER and pattern matching."""
+        user_data = {}
+        
+        # Extract email
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        email_match = re.search(email_pattern, text)
+        if email_match:
+            user_data['email'] = email_match.group()
+            logger = logging.getLogger(__name__)
+            logger.info(f"Email found: {user_data['email']}")
+        
+        # Extract name using NER
+        for ent in doc.ents:
+            if ent.label_ == "PERSON":
+                user_data['name'] = ent.text
+                break
+        
+        # Fallback to pattern matching for name
+        if 'name' not in user_data:
             name_patterns = [
                 r'name (?:to|as) (\w+)',
-                r'name (?:should be|will be) (\w+)'
+                r'name (?:should be|will be) (\w+)',
+                r'change (?:my )?name to (\w+)'
             ]
             for pattern in name_patterns:
                 name_match = re.search(pattern, text.lower())
                 if name_match:
                     user_data['name'] = name_match.group(1)
                     break
-
-            # Extract new password
-            password_patterns = [
-                r'(?:new )?password (?:to|as|:)\s*([^\s,\.]+)',
-                r'(?:new )?pass (?:to|as|:)\s*([^\s,\.]+)',
-                r'change (?:it )?to\s*([^\s,\.]+)'
-            ]
-            for pattern in password_patterns:
-                pass_match = re.search(pattern, text, re.IGNORECASE)
-                if pass_match:
-                    user_data['password'] = pass_match.group(1)
-                    break
-            
-            # Only include user_data if we found any fields to update
-            if user_data:
-                params['user_data'] = user_data
         
-        return params 
+        # Extract password (pattern matching only for security)
+        password_patterns = [
+            r'(?:new )?password (?:to|as|:)\s*([^\s,\.]+)',
+            r'(?:new )?pass (?:to|as|:)\s*([^\s,\.]+)',
+            r'change (?:it )?to\s*([^\s,\.]+)'
+        ]
+        for pattern in password_patterns:
+            pass_match = re.search(pattern, text, re.IGNORECASE)
+            if pass_match:
+                user_data['password'] = pass_match.group(1)
+                break
+        
+        return user_data 
