@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.api import users_router
 from app.api.chat import router as chat_router
+from app.api.orders import router as orders_router
 from app.core.exceptions import UserAlreadyExistsError, ResourceNotFoundError, ValidationError
 from app.services.nlu import warmup_nlu
 
@@ -58,8 +59,9 @@ async def sqlalchemy_handler(request: Request, exc: SQLAlchemyError):
     )
 
 # Include routers
-app.include_router(users_router, prefix="/api/v1/users", tags=["users"])
-app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(users_router, prefix="/users", tags=["users"])
+app.include_router(chat_router, prefix="/chat", tags=["chat"])
+app.include_router(orders_router, prefix="/orders", tags=["orders"])
 
 @app.on_event("startup")
 def startup_event():
