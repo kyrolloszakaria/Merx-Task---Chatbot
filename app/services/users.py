@@ -78,4 +78,16 @@ class UserService:
         return self.db.query(User).filter(User.email == email).first()
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        return pwd_context.verify(plain_password, hashed_password) 
+        return pwd_context.verify(plain_password, hashed_password)
+        
+    def delete_user(self, user_id: int) -> None:
+        """Delete a user and all their associated data"""
+        user = self.get_user(user_id)
+        
+        # Delete the user
+        self.db.delete(user)
+        try:
+            self.db.commit()
+        except Exception as e:
+            self.db.rollback()
+            raise ValueError(f"Failed to delete user: {str(e)}") 

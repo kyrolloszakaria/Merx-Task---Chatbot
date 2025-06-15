@@ -63,4 +63,21 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     Raises 404 if user is not found.
     """
     user_service = UserService(db)
-    return user_service.get_user(user_id) 
+    return user_service.get_user(user_id)
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    """
+    Delete a user and all their associated data.
+    This will also delete:
+    - All user conversations
+    - All user messages
+    - All user orders
+    - User preferences
+    
+    Returns 204 on success.
+    Raises 404 if user is not found.
+    """
+    user_service = UserService(db)
+    user_service.delete_user(user_id)
+    return None 

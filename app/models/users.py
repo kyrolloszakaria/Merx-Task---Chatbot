@@ -22,5 +22,5 @@ class User(Base):
     preferences = Column(JSON, nullable=True)
 
     # Relationships
-    conversations = relationship("Conversation", back_populates="user")
-    orders = relationship("Order", back_populates="user") 
+    conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan") 
