@@ -7,6 +7,7 @@ import logging
 import spacy
 import re
 from typing import Optional
+from datetime import datetime
 
 _classifier = None
 _nlp = None
@@ -49,25 +50,55 @@ class NLUService:
                 "say hello", "introduce myself"
             ],
             Intent.PRODUCT_SEARCH: [
-                "search for products",
-                "find items",
-                "looking for products",
-                "show products",
-                "browse catalog"
+                "search for laptops",
+                "find laptops",
+                "looking for a laptop",
+                "show me laptops",
+                "browse laptop catalog",
+                "search for accessories",
+                "find laptop accessories",
+                "need a charger",
+                "looking for mouse",
+                "show me laptop bags",
+                "find laptop cases",
+                "need keyboard",
+                "search for monitors",
+                "find docking station",
+                "looking for webcam",
+                "show me headphones",
+                "find laptop stand",
+                "need cooling pad",
+                "search for RAM",
+                "find SSD",
+                "looking for external drive",
+                "show me USB hub",
+                "gaming laptops",
+                "business laptops",
+                "student laptops"
             ],
             Intent.ORDER_STATUS: [
                 "check order status",
                 "track order",
                 "where is my order",
                 "delivery status",
-                "shipping status"
+                "shipping status",
+                "when will my laptop arrive",
+                "track my delivery",
+                "order tracking",
+                "package status"
             ],
             Intent.HELP: [
                 "need help",
                 "support needed",
                 "assistance required",
-                "how to",
-                "guide me"
+                "how to choose laptop",
+                "laptop buying guide",
+                "compare laptops",
+                "which laptop should I buy",
+                "laptop specifications help",
+                "technical support",
+                "warranty information",
+                "return policy"
             ],
             Intent.MODIFY_USER: [
                 "update profile",
@@ -183,13 +214,34 @@ class NLUService:
 
     def _extract_category(self, text: str, doc: spacy.tokens.Doc) -> Optional[str]:
         """Extract product category using NER and custom matching."""
-        # Predefined categories
+        # Predefined categories for laptop store
         categories = {
-            'electronics': ['electronics', 'gadgets', 'devices', 'phones', 'computers'],
-            'clothing': ['clothing', 'clothes', 'apparel', 'fashion', 'wear'],
-            'books': ['books', 'novels', 'textbooks', 'magazines'],
-            'food': ['food', 'groceries', 'snacks', 'drinks'],
-            'furniture': ['furniture', 'chairs', 'tables', 'sofas']
+            'laptops': [
+                'laptop', 'notebooks', 'macbook', 'chromebook',
+                'gaming laptop', 'business laptop', 'student laptop',
+                'ultrabook', 'workstation', 'Dell', 'Acer', "Asus"
+            ],
+            'accessories': [
+                'accessory', 'mouse', 'keyboard', 'charger',
+                'adapter', 'cable', 'bag', 'case', 'sleeve',
+                'stand', 'cooling pad', 'webcam', 'headphones',
+                'speakers', 'microphone', 'dock', 'hub'
+            ],
+            'storage': [
+                'storage', 'ssd', 'hard drive', 'hdd', 'external drive',
+                'flash drive', 'usb drive', 'memory card'
+            ],
+            'memory': [
+                'ram', 'memory', 'memory upgrade', 'ddr4', 'ddr5'
+            ],
+            'displays': [
+                'monitor', 'display', 'screen', 'external monitor',
+                'portable monitor', 'hdmi', 'displayport'
+            ],
+            'networking': [
+                'wifi', 'ethernet', 'network card', 'bluetooth adapter',
+                'router', 'network cable'
+            ]
         }
         
         # Check NER results
