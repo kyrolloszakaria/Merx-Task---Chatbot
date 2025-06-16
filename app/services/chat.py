@@ -14,6 +14,8 @@ from app.schemas.users import UserCreate, UserModify
 from app.core.exceptions import ResourceNotFoundError, UserAlreadyExistsError
 from app.services.nlu import NLUService
 from app.services.users import UserService
+from app.services.products import ProductService
+from app.schemas.products import ProductSearchParams
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +26,7 @@ class ChatService:
         self.db = db
         self.nlu = NLUService()
         self.user_service = UserService(db)
+        self.product_service = ProductService(db)
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     def update_conversation_context(self, conversation: Conversation, intent: Intent, params: Dict[str, Any] = None) -> None:
@@ -62,12 +65,60 @@ class ChatService:
         intent_to_function = {
             Intent.PRODUCT_SEARCH: {
                 "name": "search_products",
-                "description": "Search for products in the catalog",
+                "description": "Search for products in the laptop store catalog",
                 "parameters": {
-                    "query": "string",
-                    "category": "string?",
-                    "max_price": "float?"
-                }
+                    "query": {
+                        "type": "string?",
+                        "description": "General search term for product name or description"
+                    },
+                    "brand": {
+                        "type": "string?",
+                        "description": "Brand name (e.g., Dell, Acer, Asus, HP, Lenovo)",
+                        "enum": ["Dell", "Acer", "Asus", "HP", "Lenovo", "Apple", "Microsoft"]
+                    },
+                    "category": {
+                        "type": "string?",
+                        "description": "Product category",
+                        "enum": ["laptops", "accessories", "displays", "storage", "memory", "networking"]
+                    },
+                    "max_price": {
+                        "type": "float?",
+                        "description": "Maximum price in dollars",
+                        "minimum": 0
+                    },
+                    "min_price": {
+                        "type": "float?",
+                        "description": "Minimum price in dollars",
+                        "minimum": 0
+                    },
+                    "in_stock": {
+                        "type": "boolean?",
+                        "description": "Filter for products in stock"
+                    },
+                    "page": {
+                        "type": "integer?",
+                        "description": "Page number for pagination",
+                        "default": 1,
+                        "minimum": 1
+                    },
+                    "page_size": {
+                        "type": "integer?",
+                        "description": "Number of items per page",
+                        "default": 20,
+                        "minimum": 1,
+                        "maximum": 100
+                    }
+                },
+                "examples": [
+                    "Show me Dell laptops under $1000",
+                    "Find gaming laptops in stock",
+                    "Search for laptop accessories",
+                    "Show me monitors under $500",
+                    "Find SSD storage devices",
+                    "Search for laptop chargers",
+                    "Show me laptops between $500 and $1000",
+                    "Find Dell XPS laptops"
+                ]
             },
             Intent.ORDER_STATUS: {
                 "name": "get_order_status",
@@ -217,6 +268,53 @@ class ChatService:
                             self.db.add(bot_message)
                     except UserAlreadyExistsError as e:
                         raise ValueError(str(e))
+                elif intent == Intent.PRODUCT_SEARCH:
+                    # Call product service to search products
+                    try:
+                        # Extract pagination parameters
+                        page = params.pop('page', 1)
+                        page_size = params.pop('page_size', 20)
+                        skip = (page - 1) * page_size
+                        
+                        # Create search params object
+                        search_params = ProductSearchParams(**params)
+                        
+                        # Perform search
+                        products, total = self.product_service.search_products(
+                            search_params=search_params,
+                            skip=skip,
+                            limit=page_size
+                        )
+                        
+                        # Format the search results for the response
+                        function_result = {
+                            "total": total,
+                            "page": page,
+                            "page_size": page_size,
+                            "products": [
+                                {
+                                    "id": product.id,
+                                    "name": product.name,
+                                    "price": product.price,
+                                    "category": product.category,
+                                    "in_stock": product.stock > 0
+                                }
+                                for product in products
+                            ]
+                        }
+                        status = FunctionCallStatus.COMPLETED
+                        
+                        # Generate response based on search results
+                        if total == 0:
+                            bot_message.content = self._generate_no_results_response(params)
+                        else:
+                            bot_message.content = self._generate_search_results_response(function_result, params)
+                            
+                    except Exception as e:
+                        logger.error(f"Error during product search: {str(e)}")
+                        function_result = {"error": str(e)}
+                        status = FunctionCallStatus.FAILED
+                        bot_message.content = f"I apologize, but I encountered an error while searching for products: {str(e)}"
                 else:
                     # Handle other function calls here
                     function_result = None
@@ -261,24 +359,64 @@ class ChatService:
             # Clear context on greeting
             if self.conversation:
                 self.clear_conversation_context(self.conversation)
-            return ("Hello! I'm your shopping assistant. I can help you browse products, check orders, "
-                   "and manage your account. What would you like to do?")
+            return ("Hello! I'm your laptop store assistant. I can help you find laptops and accessories, "
+                   "check your orders, and manage your account. What are you looking for today?")
         
         elif intent == Intent.PRODUCT_SEARCH:
-            category = params.get('category', 'products')
+            # Extract all search parameters
+            category = params.get('category')
+            brand = params.get('brand')
+            query = params.get('query')
             max_price = params.get('max_price')
+            min_price = params.get('min_price')
+            in_stock = params.get('in_stock')
             
-            # If we're in product search context but missing parameters
+            # If we're in product search context but missing key parameters
             if context and context.get('current_intent') == Intent.PRODUCT_SEARCH.value:
-                if not category and not max_price:
-                    return ("What kind of products are you looking for? You can specify:\n"
-                           "- A category (e.g., electronics, clothing, books)\n"
-                           "- A price range (e.g., under $100)\n"
-                           "- Or both!")
+                if not any([category, brand, query, max_price, min_price]):
+                    return ("I can help you find the perfect laptop or accessory! You can specify:\n"
+                           "- A category (e.g., laptops, accessories, displays, storage)\n"
+                           "- A brand (e.g., Dell, Acer, Asus, HP)\n"
+                           "- A price range (e.g., under $1000 or between $500 and $1000)\n"
+                           "- Or combine them (e.g., 'Dell laptops under $800')\n"
+                           "What are you interested in?")
             
-            if max_price:
-                return f"I'll help you find {category} under ${max_price}. Let me search our catalog..."
-            return f"I'll help you find {category}. Let me search our catalog..."
+            # Build a natural response based on the search parameters
+            response_parts = []
+            
+            # Add category/brand specific part
+            if category and brand:
+                response_parts.append(f"{brand} {category}")
+            elif brand:
+                response_parts.append(f"{brand} products")
+            elif category:
+                response_parts.append(f"{category}")
+            elif query:
+                response_parts.append(f"products matching '{query}'")
+            
+            # Add price range part
+            if min_price and max_price:
+                response_parts.append(f"between ${min_price} and ${max_price}")
+            elif max_price:
+                response_parts.append(f"under ${max_price}")
+            elif min_price:
+                response_parts.append(f"over ${min_price}")
+            
+            # Add stock status
+            if in_stock is True:
+                response_parts.append("that are in stock")
+            elif in_stock is False:
+                response_parts.append("including out of stock items")
+            
+            if response_parts:
+                search_criteria = ", ".join(response_parts[:-1])
+                if len(response_parts) > 1:
+                    search_criteria += f" and {response_parts[-1]}"
+                else:
+                    search_criteria = response_parts[0]
+                return f"I'll help you find {search_criteria}. Let me search our catalog..."
+            
+            return "I'll search our catalog. Please let me know if you want to filter by brand, price, or category."
         
         elif intent == Intent.ORDER_STATUS:
             order_id = params.get('order_id')
@@ -293,9 +431,13 @@ class ChatService:
         
         elif intent == Intent.HELP:
             return ("I'm here to help! You can:\n"
-                   "- Browse products by saying 'show me products' or 'search for electronics'\n"
-                   "- Check order status by saying 'track my order #123'\n"
-                   "- Update your profile by saying things like:\n"
+                   "- Browse our laptop store by saying things like:\n"
+                   "  • 'Show me Dell laptops'\n"
+                   "  • 'Find gaming laptops under $1500'\n"
+                   "  • 'Search for laptop chargers'\n"
+                   "  • 'Show me monitors in stock'\n"
+                   "- Check your order status by saying 'track my order #123'\n"
+                   "- Update your profile by saying:\n"
                    "  • 'change my name to John'\n"
                    "  • 'update my email to new@example.com'\n"
                    "  • 'change my password'\n"
@@ -337,4 +479,99 @@ class ChatService:
         conversation.ended_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(conversation)
-        return conversation 
+        return conversation
+
+    def _generate_no_results_response(self, params: Dict[str, Any]) -> str:
+        """Generate a response when no products are found."""
+        response_parts = []
+        
+        # Add specific reasons why no results were found
+        if params.get('brand'):
+            response_parts.append(f"no {params['brand']} products")
+        if params.get('category'):
+            response_parts.append(f"in the {params['category']} category")
+        if params.get('min_price') and params.get('max_price'):
+            response_parts.append(f"between ${params['min_price']} and ${params['max_price']}")
+        elif params.get('max_price'):
+            response_parts.append(f"under ${params['max_price']}")
+        elif params.get('min_price'):
+            response_parts.append(f"over ${params['min_price']}")
+        if params.get('in_stock') is True:
+            response_parts.append("currently in stock")
+        
+        if response_parts:
+            criteria = ", ".join(response_parts[:-1])
+            if len(response_parts) > 1:
+                criteria += f" and {response_parts[-1]}"
+            else:
+                criteria = response_parts[0]
+            message = f"I couldn't find any products matching your criteria: {criteria}."
+        else:
+            message = "I couldn't find any products matching your search criteria."
+        
+        # Add suggestions
+        message += "\n\nYou could try:"
+        suggestions = []
+        if params.get('min_price') or params.get('max_price'):
+            suggestions.append("• Adjusting your price range")
+        if params.get('brand'):
+            suggestions.append(f"• Looking for a different brand than {params['brand']}")
+        if params.get('in_stock') is True:
+            suggestions.append("• Including out of stock items")
+        if params.get('category'):
+            suggestions.append("• Browsing a different category")
+        suggestions.append("• Using more general search terms")
+        
+        return message + "\n" + "\n".join(suggestions)
+
+    def _generate_search_results_response(self, results: Dict[str, Any], params: Dict[str, Any]) -> str:
+        """Generate a response for successful product search."""
+        total_results = results["total"]
+        products = results["products"]
+        current_page = results["page"]
+        page_size = results["page_size"]
+        
+        # Start with the number of results
+        if total_results == 1:
+            message = "I found 1 product"
+        else:
+            message = f"I found {total_results} products"
+        
+        # Add search criteria used
+        criteria_parts = []
+        if params.get('brand'):
+            criteria_parts.append(f"from {params['brand']}")
+        if params.get('category'):
+            criteria_parts.append(f"in {params['category']}")
+        if params.get('min_price') and params.get('max_price'):
+            criteria_parts.append(f"between ${params['min_price']} and ${params['max_price']}")
+        elif params.get('max_price'):
+            criteria_parts.append(f"under ${params['max_price']}")
+        elif params.get('min_price'):
+            criteria_parts.append(f"over ${params['min_price']}")
+        if params.get('in_stock') is True:
+            criteria_parts.append("in stock")
+        
+        if criteria_parts:
+            criteria = ", ".join(criteria_parts[:-1])
+            if len(criteria_parts) > 1:
+                criteria += f" and {criteria_parts[-1]}"
+            else:
+                criteria = criteria_parts[0]
+            message += f" {criteria}"
+        
+        message += ":\n\n"
+        
+        # Add product details
+        for i, product in enumerate(products, 1):
+            message += (f"{i}. {product['name']} - ${product['price']:.2f} "
+                       f"({'In Stock' if product['in_stock'] else 'Out of Stock'})\n")
+        
+        # Add pagination info if necessary
+        total_pages = (total_results + page_size - 1) // page_size
+        if total_pages > 1:
+            message += f"\nShowing page {current_page} of {total_pages}. "
+            if current_page < total_pages:
+                message += "You can ask for the next page to see more results."
+        
+        return message 

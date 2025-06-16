@@ -51,6 +51,7 @@ class NLUService:
             ],
             Intent.PRODUCT_SEARCH: [
                 "search for laptops",
+                "search for devices",
                 "find laptops",
                 "looking for a laptop",
                 "show me laptops",
@@ -163,16 +164,69 @@ class NLUService:
         doc = self.nlp(text)
         
         if intent == Intent.PRODUCT_SEARCH:
-            # Extract price using both NER and pattern matching
-            price = self._extract_price(text, doc)
-            if price is not None:
-                params['max_price'] = price
-            
-            # Extract category using both NER and custom matching
+            # First, try to extract category as it's more important for initial filtering
             category = self._extract_category(text, doc)
             if category:
                 params['category'] = category
-        
+
+            # Extract general search query, but be smarter about it
+            query_terms = []
+            skip_next = False  # To handle multi-word terms
+            
+            for i, token in enumerate(doc):
+                if skip_next:
+                    skip_next = False
+                    continue
+                
+                # Skip common stop words and basic verbs
+                if token.text.lower() in ['want', 'new', 'need', 'looking', 'for', 'me', 'show', 'find', 'search', 'get', 'buy']:
+                    continue
+                
+                # Check for important adjective + noun combinations
+                if token.pos_ == 'ADJ' and i < len(doc) - 1 and doc[i + 1].pos_ == 'NOUN':
+                    combined_term = f"{token.text} {doc[i + 1].text}"
+                    query_terms.append(combined_term)
+                    skip_next = True
+                # Handle individual important terms
+                elif token.pos_ in ['NOUN', 'PROPN'] or (token.pos_ == 'ADJ' and token.text.lower() in ['new', 'used', 'gaming', 'business']):
+                    query_terms.append(token.text)
+            
+            # If we found any terms, combine them into a query
+            if query_terms:
+                # If we have a category, we might want to be more selective about the query
+                if category:
+                    # Filter out the category name from query terms if it's already captured
+                    query_terms = [term for term in query_terms 
+                                 if term.lower() != category.lower() and 
+                                 term.lower() not in self._get_category_keywords(category)]
+                
+                if query_terms:  # Only add query if we have terms after filtering
+                    params['query'] = ' '.join(query_terms).strip()
+
+            # Extract price ranges using both NER and pattern matching
+            min_price, max_price = self._extract_price_range(text, doc)
+            if min_price is not None:
+                params['min_price'] = min_price
+            if max_price is not None:
+                params['max_price'] = max_price
+            
+            # Extract brand
+            brand = self._extract_brand(text, doc)
+            if brand:
+                params['brand'] = brand
+
+            # Extract stock status
+            in_stock = self._extract_stock_status(text)
+            if in_stock is not None:
+                params['in_stock'] = in_stock
+
+            # Extract pagination parameters
+            page, page_size = self._extract_pagination(text)
+            if page is not None:
+                params['page'] = page
+            if page_size is not None:
+                params['page_size'] = page_size
+
         elif intent == Intent.ORDER_STATUS:
             # Extract order number using pattern matching and NER
             order_id = self._extract_order_id(text, doc)
@@ -186,6 +240,136 @@ class NLUService:
                 params['user_data'] = user_data
         
         return params
+
+    def _extract_price_range(self, text: str, doc: spacy.tokens.Doc) -> Tuple[Optional[float], Optional[float]]:
+        """Extract minimum and maximum price from text."""
+        min_price = None
+        max_price = None
+        
+        # Pattern matching for price ranges
+        between_pattern = re.compile(r'between\s*\$?\s*(\d+(?:\.\d{2})?)\s*(?:and|to)\s*\$?\s*(\d+(?:\.\d{2})?)', re.IGNORECASE)
+        under_pattern = re.compile(r'(?:under|below|less than)\s*\$?\s*(\d+(?:\.\d{2})?)', re.IGNORECASE)
+        over_pattern = re.compile(r'(?:over|above|more than)\s*\$?\s*(\d+(?:\.\d{2})?)', re.IGNORECASE)
+        
+        # Check for "between X and Y" pattern
+        between_match = between_pattern.search(text)
+        if between_match:
+            min_price = float(between_match.group(1))
+            max_price = float(between_match.group(2))
+            return min_price, max_price
+        
+        # Check for "under X" pattern
+        under_match = under_pattern.search(text)
+        if under_match:
+            max_price = float(under_match.group(1))
+        
+        # Check for "over X" pattern
+        over_match = over_pattern.search(text)
+        if over_match:
+            min_price = float(over_match.group(1))
+        
+        # Extract prices from NER as fallback
+        if not min_price and not max_price:
+            for ent in doc.ents:
+                if ent.label_ == 'MONEY':
+                    price_text = re.sub(r'[^\d.]', '', ent.text)
+                    try:
+                        price = float(price_text)
+                        # If we find a single price, assume it's a maximum
+                        max_price = price
+                    except ValueError:
+                        continue
+        
+        return min_price, max_price
+
+    def _extract_brand(self, text: str, doc: spacy.tokens.Doc) -> Optional[str]:
+        """Extract brand from text."""
+        BRANDS = {
+            'dell': 'Dell',
+            'acer': 'Acer',
+            'asus': 'Asus',
+            'hp': 'HP',
+            'lenovo': 'Lenovo',
+            'apple': 'Apple',
+            'microsoft': 'Microsoft'
+        }
+        
+        # Look for brand mentions in text
+        text_lower = text.lower()
+        for brand_lower, brand_proper in BRANDS.items():
+            if brand_lower in text_lower:
+                return brand_proper
+        
+        # Look for brand entities in NER
+        for ent in doc.ents:
+            if ent.label_ == 'ORG':
+                brand_lower = ent.text.lower()
+                if brand_lower in BRANDS:
+                    return BRANDS[brand_lower]
+        
+        return None
+
+    def _extract_stock_status(self, text: str) -> Optional[bool]:
+        """Extract stock status from text."""
+        text_lower = text.lower()
+        
+        # Check for in stock indicators
+        in_stock_patterns = [
+            r'in stock',
+            r'available',
+            r'in store',
+            r'ready to ship'
+        ]
+        
+        # Check for out of stock indicators
+        out_of_stock_patterns = [
+            r'out of stock',
+            r'unavailable',
+            r'include.*out of stock',
+            r'show.*all.*items'
+        ]
+        
+        for pattern in in_stock_patterns:
+            if re.search(pattern, text_lower):
+                return True
+                
+        for pattern in out_of_stock_patterns:
+            if re.search(pattern, text_lower):
+                return False
+        
+        return None
+
+    def _extract_pagination(self, text: str) -> Tuple[Optional[int], Optional[int]]:
+        """Extract pagination parameters from text."""
+        text_lower = text.lower()
+        page = None
+        page_size = None
+        
+        # Extract page number
+        page_pattern = re.compile(r'page\s*(\d+)', re.IGNORECASE)
+        page_match = page_pattern.search(text_lower)
+        if page_match:
+            try:
+                page = int(page_match.group(1))
+            except ValueError:
+                pass
+        
+        # Extract page size
+        size_patterns = [
+            r'show\s*(\d+)\s*(?:items?|products?|results?)',
+            r'(\d+)\s*(?:items?|products?|results?)\s*per\s*page'
+        ]
+        
+        for pattern in size_patterns:
+            size_match = re.search(pattern, text_lower)
+            if size_match:
+                try:
+                    page_size = int(size_match.group(1))
+                    break
+                except ValueError:
+                    continue
+        
+        return page, page_size
 
     def _extract_price(self, text: str, doc: spacy.tokens.Doc) -> Optional[float]:
         """Extract price from text using both NER and pattern matching."""
@@ -328,3 +512,15 @@ class NLUService:
                 break
         
         return user_data 
+
+    def _get_category_keywords(self, category: str) -> List[str]:
+        """Get keywords associated with a category to avoid redundant query terms."""
+        category_keywords = {
+            'laptops': ['laptop', 'laptops', 'notebook', 'notebooks', 'computer', 'computers'],
+            'accessories': ['accessory', 'accessories', 'peripheral', 'peripherals'],
+            'displays': ['display', 'displays', 'monitor', 'monitors', 'screen', 'screens'],
+            'storage': ['storage', 'drive', 'drives', 'ssd', 'hdd', 'disk', 'disks'],
+            'memory': ['memory', 'ram', 'ddr', 'dimm'],
+            'networking': ['network', 'networking', 'wifi', 'ethernet']
+        }
+        return category_keywords.get(category.lower(), []) 
