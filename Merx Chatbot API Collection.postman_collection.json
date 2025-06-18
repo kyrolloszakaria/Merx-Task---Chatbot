@@ -83,6 +83,150 @@
 							],
 							"cookie": [],
 							"body": "{\n    \"name\": \"Demo User\",\n    \"email\": \"user@demo.com\",\n    \"id\": 7,\n    \"role\": \"user\",\n    \"created_at\": \"2025-06-18T02:17:15.625512\",\n    \"last_login\": null\n}"
+						},
+						{
+							"name": "Invalid username",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"\",\n    \"email\": \"user@Demo.com\",\n    \"password\": \"StrongPass@123!\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:14:40 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "152"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": [\n        {\n            \"loc\": [\n                \"body\",\n                \"name\"\n            ],\n            \"msg\": \"ensure this value has at least 2 characters\",\n            \"type\": \"value_error.any_str.min_length\",\n            \"ctx\": {\n                \"limit_value\": 2\n            }\n        }\n    ]\n}"
+						},
+						{
+							"name": "Invalid email",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"demo\",\n    \"email\": \"user@Demo\",\n    \"password\": \"StrongPass@123!\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:15:03 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "107"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": [\n        {\n            \"loc\": [\n                \"body\",\n                \"email\"\n            ],\n            \"msg\": \"value is not a valid email address\",\n            \"type\": \"value_error.email\"\n        }\n    ]\n}"
+						},
+						{
+							"name": "invalid password",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"demo\",\n    \"email\": \"user@Demo.com\",\n    \"password\": \"123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:15:26 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "156"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": [\n        {\n            \"loc\": [\n                \"body\",\n                \"password\"\n            ],\n            \"msg\": \"ensure this value has at least 8 characters\",\n            \"type\": \"value_error.any_str.min_length\",\n            \"ctx\": {\n                \"limit_value\": 8\n            }\n        }\n    ]\n}"
 						}
 					]
 				},
