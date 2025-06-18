@@ -1,0 +1,1544 @@
+{
+	"info": {
+		"_postman_id": "73c02780-1185-46bb-b807-5a22b35d6ba0",
+		"name": "Merx Chatbot API Collection",
+		"description": "A FastAPI-based chatbot with e-commerce integration",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "36198497"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Demo User\",\n    \"email\": \"user@Demo.com\",\n    \"password\": \"StrongPass@123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Create a new user account"
+					},
+					"response": [
+						{
+							"name": "Create User",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Demo User\",\n    \"email\": \"user@Demo.com\",\n    \"password\": \"StrongPass@123!\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:17:14 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "125"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Demo User\",\n    \"email\": \"user@demo.com\",\n    \"id\": 7,\n    \"role\": \"user\",\n    \"created_at\": \"2025-06-18T02:17:15.625512\",\n    \"last_login\": null\n}"
+						}
+					]
+				},
+				{
+					"name": "Get User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/7",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"7"
+							]
+						},
+						"description": "Get user details by ID"
+					},
+					"response": [
+						{
+							"name": "Get User",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/users/7",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"7"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:17:34 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "125"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Demo User\",\n    \"email\": \"user@demo.com\",\n    \"id\": 7,\n    \"role\": \"user\",\n    \"created_at\": \"2025-06-18T02:17:15.625512\",\n    \"last_login\": null\n}"
+						}
+					]
+				},
+				{
+					"name": "Modify User",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Demoo User\"\n    \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/6",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"6"
+							]
+						},
+						"description": "Update user information"
+					},
+					"response": [
+						{
+							"name": "Modify User",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Demoo User\"\n    \n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/users/6",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"users",
+										"6"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:18:01 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "129"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Demoo User\",\n    \"email\": \"raef@example.com\",\n    \"id\": 6,\n    \"role\": \"user\",\n    \"created_at\": \"2025-06-16T18:02:24.782664\",\n    \"last_login\": null\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "Create Conversation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 7\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/conversations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"conversations"
+							]
+						},
+						"description": "Start a new conversation"
+					},
+					"response": [
+						{
+							"name": "Create Conversation",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user_id\": 7\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:18:10 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "107"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 14,\n    \"user_id\": 7,\n    \"started_at\": \"2025-06-18T02:18:10.732482\",\n    \"ended_at\": null,\n    \"active\": true,\n    \"messages\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Send Message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Show me Dell laptops under $1000\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/conversations/1/messages",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"conversations",
+								"1",
+								"messages"
+							]
+						},
+						"description": "Send a message in a conversation"
+					},
+					"response": [
+						{
+							"name": "Greeting",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"Hello, how are you?\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:22:59 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "526"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"Hello, how are you?\",\n        \"id\": 294,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:23:09.722534\",\n        \"intent\": \"greeting\",\n        \"confidence_score\": 0.41487210988998413,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"Hello! I'm your laptop store assistant. I can help you find laptops and accessories, check your orders, and manage your account. What are you looking for today?\",\n        \"id\": 295,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:23:09.725793\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "Update Profile",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I want to update my profile username to DemoOo User\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:42:10 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "478"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"I want to update my profile username to DemoOo User\",\n        \"id\": 320,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:42:21.432391\",\n        \"intent\": \"modify_user\",\n        \"confidence_score\": 0.3933202922344208,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"I've updated your name to demooo. Is there anything else you'd like to update?\",\n        \"id\": 321,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:42:21.442920\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "search by adjective/condition",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I am looking for a new gaming laptop.\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:23:34 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "677"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"I am looking for a new gaming laptop.\",\n        \"id\": 296,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:23:47.109524\",\n        \"intent\": \"product_search\",\n        \"confidence_score\": 0.40359267592430115,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"I found 2 products in laptops:\\n\\n1. ASUS ROG Zephyrus G14 (Product #100026) - $1599.00 (In Stock)\\n2. Razer Blade 15 (Product #100036) - $1999.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100026'\\n• 'Buy 1 of #100036 and 3 of #100026'\",\n        \"id\": 297,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:23:47.109526\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "search by product and budget",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I want a mouse under $100\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:25:05 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "686"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"I want a mouse under $100\",\n        \"id\": 298,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:25:13.747353\",\n        \"intent\": \"product_search\",\n        \"confidence_score\": 0.18765883147716522,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"I found 2 products in accessories and under $100.0:\\n\\n1. Anker Mouse I Cable (Product #100047) - $14.99 (In Stock)\\n2. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100047'\\n• 'Buy 1 of #100027 and 3 of #100047'\",\n        \"id\": 299,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:25:13.747356\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "search by category and budget",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I am looking for networking products in the budget of $1000\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:39:33 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "783"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"I am looking for networking products in the budget of $1000\",\n        \"id\": 316,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:39:47.356105\",\n        \"intent\": \"product_search\",\n        \"confidence_score\": 0.3,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"I found 3 products in networking and under $1000.0:\\n\\n1. TP-Link Archer AX55 (Product #100034) - $129.99 (In Stock)\\n2. TP-Link Cat6 Ethernet Cable 10m (Product #100046) - $9.99 (In Stock)\\n3. Ubiquiti UniFi AP AC Pro (Product #100045) - $139.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100034'\\n• 'Buy 1 of #100046 and 3 of #100034'\",\n        \"id\": 317,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:39:47.356109\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "Create Order",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I want to purchase item #100026 and item #100047\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:43:47 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "490"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"I want to purchase item #100026 and item #100047\",\n        \"id\": 324,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:43:49.186294\",\n        \"intent\": \"create_order\",\n        \"confidence_score\": 0.95,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"Please provide a shipping address for your order. In the format of: 123 Main St, Anytown, Country, zipcode\",\n        \"id\": 325,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:43:49.186298\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "Provide shipping address",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"My shipping address is 40 Nineteenth st, New Cairo\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:44:29 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "564"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"My shipping address is 40 Nineteenth st, New Cairo\",\n        \"id\": 326,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:44:42.968481\",\n        \"intent\": \"create_order\",\n        \"confidence_score\": 0.13511872291564941,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"Great! I've placed your order (#7). The total amount is $1613.99. Your order status is pending. You can check your order status anytime by saying 'check order #7'.\",\n        \"id\": 327,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:44:43.012322\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "Create order (out of stock)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I want to buy item #100047\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:47:43 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "493"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"check order status for order #7\",\n        \"id\": 336,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:47:55.388956\",\n        \"intent\": \"create_order\",\n        \"confidence_score\": 0.20276854932308197,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"I apologize, but I couldn't create your order: Insufficient stock for product Anker Mouse I Cable. Available: 0\",\n        \"id\": 337,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:47:55.388959\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "search by product and availability",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I am looking for mouse. it has to be available\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:52:12 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "599"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"I am looking for mouse. it has to be available\",\n        \"id\": 340,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:52:22.104094\",\n        \"intent\": \"product_search\",\n        \"confidence_score\": 0.38807186484336853,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"I found 1 product in accessories and in stock:\\n\\n1. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100027'\",\n        \"id\": 341,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:52:22.104097\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "Check Order Status",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"Please check the status of my order number 7\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:54:06 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "578"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"Please check the status of my order number 7\",\n        \"id\": 344,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:54:16.710940\",\n        \"intent\": \"order_status\",\n        \"confidence_score\": 0.20268797874450684,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"Order #7 status: pending\\nTotal amount: $1613.99\\nOrdered on: 2025-06-18 02:44:42\\n\\nItems:\\n• Product #100026: 1x @ $1599.00 = $1599.00\\n• Product #100047: 1x @ $14.99 = $14.99\\n\",\n        \"id\": 345,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:54:16.710943\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						},
+						{
+							"name": "Cancel Order",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"content\": \"I want to cancel order number 7\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"messages"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:58:09 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "478"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"user_message\": {\n        \"content\": \"I want to cancel order number 7\",\n        \"id\": 352,\n        \"direction\": \"incoming\",\n        \"timestamp\": \"2025-06-18T02:58:10.597649\",\n        \"intent\": \"cancel_order\",\n        \"confidence_score\": 0.95,\n        \"function_calls\": null\n    },\n    \"bot_message\": {\n        \"content\": \"I've cancelled order #7. The order status is now cancelled. If you need to place a new order, just let me know!\",\n        \"id\": 353,\n        \"direction\": \"outgoing\",\n        \"timestamp\": \"2025-06-18T02:58:10.615720\",\n        \"intent\": null,\n        \"confidence_score\": null,\n        \"function_calls\": null\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "End Conversation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/chat/conversations/1/end",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"conversations",
+								"1",
+								"end"
+							]
+						},
+						"description": "End an active conversation"
+					},
+					"response": [
+						{
+							"name": "End Conversation",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/chat/conversations/14/end",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"chat",
+										"conversations",
+										"14",
+										"end"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 02:58:48 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "21834"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 14,\n    \"user_id\": 7,\n    \"started_at\": \"2025-06-18T02:18:10.732482\",\n    \"ended_at\": \"2025-06-18T02:58:48.209625\",\n    \"active\": false,\n    \"messages\": [\n        {\n            \"content\": \"Hello, how are you?\",\n            \"id\": 294,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:23:09.722534\",\n            \"intent\": \"greeting\",\n            \"confidence_score\": 0.41487210988998413,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Hello! I'm your laptop store assistant. I can help you find laptops and accessories, check your orders, and manage your account. What are you looking for today?\",\n            \"id\": 295,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:23:09.725793\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for a new gaming laptop.\",\n            \"id\": 296,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:23:47.109524\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.40359267592430115,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 2 products in laptops:\\n\\n1. ASUS ROG Zephyrus G14 (Product #100026) - $1599.00 (In Stock)\\n2. Razer Blade 15 (Product #100036) - $1999.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100026'\\n• 'Buy 1 of #100036 and 3 of #100026'\",\n            \"id\": 297,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:23:47.109526\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want a mouse under $100\",\n            \"id\": 298,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:25:13.747353\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.18765883147716522,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 2 products in accessories and under $100.0:\\n\\n1. Anker Mouse I Cable (Product #100047) - $14.99 (In Stock)\\n2. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100047'\\n• 'Buy 1 of #100027 and 3 of #100047'\",\n            \"id\": 299,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:25:13.747356\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I searching for new networking accessories\",\n            \"id\": 300,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:26:25.997198\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.2903834581375122,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I couldn't find any products matching your criteria: in the accessories category and under $100.0.\\n\\nYou could try:\\n• Adjusting your price range\\n• Browsing a different category\\n• Using more general search terms\",\n            \"id\": 301,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:26:25.997200\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I searching for new networking accessories in the budget of $1000\",\n            \"id\": 302,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:27:06.298785\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.2654401957988739,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I couldn't find any products matching your criteria: in the accessories category and under $1000.0.\\n\\nYou could try:\\n• Adjusting your price range\\n• Browsing a different category\\n• Using more general search terms\",\n            \"id\": 303,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:27:06.298787\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I searching for networking products in the budget of $1000\",\n            \"id\": 304,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:33:29.464379\",\n            \"intent\": \"unknown\",\n            \"confidence_score\": 0.1660955846309662,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I'm not sure I understand. Could you please rephrase that or ask for help?\",\n            \"id\": 305,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:33:29.464396\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am searching for networking products under the budget of $1000\",\n            \"id\": 306,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:34:03.251118\",\n            \"intent\": \"help\",\n            \"confidence_score\": 0.22398221492767334,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I'm here to help! You can:\\n- Browse our laptop store by saying things like:\\n  • 'Show me Dell laptops'\\n  • 'Find gaming laptops under $1500'\\n  • 'Search for laptop chargers'\\n  • 'Show me monitors in stock'\\n- Check your order status by saying 'track my order #123'\\n- Update your profile by saying:\\n  • 'change my name to John'\\n  • 'update my email to new@example.com'\\n  • 'change my password'\\nWhat would you like to do?\",\n            \"id\": 307,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:34:03.251123\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for networking products under the budget of $1000\",\n            \"id\": 308,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:34:23.449244\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.3,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I couldn't find any products matching your criteria: under $1000.0.\\n\\nYou could try:\\n• Adjusting your price range\\n• Using more general search terms\",\n            \"id\": 309,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:34:23.449247\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for networking products under the budget of $1000\",\n            \"id\": 310,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:37:08.796384\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.3,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 20 products under $1000.0:\\n\\n1. Anker Mouse I Cable (Product #100047) - $14.99 (In Stock)\\n2. Anker Nano II 65W Charger (Product #100029) - $39.99 (In Stock)\\n3. Anker PowerExpand Elite Dock (Product #100038) - $269.99 (In Stock)\\n4. Apple Magic Keyboard (Product #100039) - $99.00 (In Stock)\\n5. ASUS ProArt Display PA278CV (Product #100033) - $379.99 (In Stock)\\n6. Cooler Master Notepal X3 (Product #100037) - $49.99 (In Stock)\\n7. Corsair Vengeance 16GB DDR4 (Product #100042) - $79.99 (In Stock)\\n8. G.Skill Ripjaws 32GB DDR5 (Product #100043) - $159.00 (In Stock)\\n9. HP Chromebook 14 (Product #100025) - $299.00 (In Stock)\\n10. Kingston DataTraveler 128GB (Product #100041) - $19.99 (In Stock)\\n11. LG UltraFine 4K Display (Product #100044) - $449.00 (In Stock)\\n12. Logitech C920 HD Pro Webcam (Product #100030) - $69.99 (In Stock)\\n13. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n14. Mechanical Keyboard RK84 (Product #100028) - $89.99 (In Stock)\\n15. Samsonite Tectonic Backpack (Product #100031) - $79.99 (In Stock)\\n16. Samsung T7 Portable SSD 1TB (Product #100032) - $129.99 (In Stock)\\n17. SanDisk Extreme Portable SSD 2TB (Product #100040) - $199.99 (In Stock)\\n18. TP-Link Archer AX55 (Product #100034) - $129.99 (In Stock)\\n19. TP-Link Cat6 Ethernet Cable 10m (Product #100046) - $9.99 (In Stock)\\n20. Ubiquiti UniFi AP AC Pro (Product #100045) - $139.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100047'\\n• 'Buy 1 of #100029 and 3 of #100047'\",\n            \"id\": 311,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:37:08.796388\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for networking products below $1000\",\n            \"id\": 312,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:38:07.034317\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.3,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 20 products under $1000.0:\\n\\n1. Anker Mouse I Cable (Product #100047) - $14.99 (In Stock)\\n2. Anker Nano II 65W Charger (Product #100029) - $39.99 (In Stock)\\n3. Anker PowerExpand Elite Dock (Product #100038) - $269.99 (In Stock)\\n4. Apple Magic Keyboard (Product #100039) - $99.00 (In Stock)\\n5. ASUS ProArt Display PA278CV (Product #100033) - $379.99 (In Stock)\\n6. Cooler Master Notepal X3 (Product #100037) - $49.99 (In Stock)\\n7. Corsair Vengeance 16GB DDR4 (Product #100042) - $79.99 (In Stock)\\n8. G.Skill Ripjaws 32GB DDR5 (Product #100043) - $159.00 (In Stock)\\n9. HP Chromebook 14 (Product #100025) - $299.00 (In Stock)\\n10. Kingston DataTraveler 128GB (Product #100041) - $19.99 (In Stock)\\n11. LG UltraFine 4K Display (Product #100044) - $449.00 (In Stock)\\n12. Logitech C920 HD Pro Webcam (Product #100030) - $69.99 (In Stock)\\n13. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n14. Mechanical Keyboard RK84 (Product #100028) - $89.99 (In Stock)\\n15. Samsonite Tectonic Backpack (Product #100031) - $79.99 (In Stock)\\n16. Samsung T7 Portable SSD 1TB (Product #100032) - $129.99 (In Stock)\\n17. SanDisk Extreme Portable SSD 2TB (Product #100040) - $199.99 (In Stock)\\n18. TP-Link Archer AX55 (Product #100034) - $129.99 (In Stock)\\n19. TP-Link Cat6 Ethernet Cable 10m (Product #100046) - $9.99 (In Stock)\\n20. Ubiquiti UniFi AP AC Pro (Product #100045) - $139.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100047'\\n• 'Buy 1 of #100029 and 3 of #100047'\",\n            \"id\": 313,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:38:07.034320\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for networking accessories below $1000\",\n            \"id\": 314,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:38:25.699701\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.40674889087677,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Please cancel my order number 7\",\n            \"id\": 346,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:55:01.640877\",\n            \"intent\": \"order_status\",\n            \"confidence_score\": 0.12655824422836304,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 20 products under $1000.0:\\n\\n1. Anker Mouse I Cable (Product #100047) - $14.99 (In Stock)\\n2. Anker Nano II 65W Charger (Product #100029) - $39.99 (In Stock)\\n3. Anker PowerExpand Elite Dock (Product #100038) - $269.99 (In Stock)\\n4. Apple Magic Keyboard (Product #100039) - $99.00 (In Stock)\\n5. ASUS ProArt Display PA278CV (Product #100033) - $379.99 (In Stock)\\n6. Cooler Master Notepal X3 (Product #100037) - $49.99 (In Stock)\\n7. Corsair Vengeance 16GB DDR4 (Product #100042) - $79.99 (In Stock)\\n8. G.Skill Ripjaws 32GB DDR5 (Product #100043) - $159.00 (In Stock)\\n9. HP Chromebook 14 (Product #100025) - $299.00 (In Stock)\\n10. Kingston DataTraveler 128GB (Product #100041) - $19.99 (In Stock)\\n11. LG UltraFine 4K Display (Product #100044) - $449.00 (In Stock)\\n12. Logitech C920 HD Pro Webcam (Product #100030) - $69.99 (In Stock)\\n13. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n14. Mechanical Keyboard RK84 (Product #100028) - $89.99 (In Stock)\\n15. Samsonite Tectonic Backpack (Product #100031) - $79.99 (In Stock)\\n16. Samsung T7 Portable SSD 1TB (Product #100032) - $129.99 (In Stock)\\n17. SanDisk Extreme Portable SSD 2TB (Product #100040) - $199.99 (In Stock)\\n18. TP-Link Archer AX55 (Product #100034) - $129.99 (In Stock)\\n19. TP-Link Cat6 Ethernet Cable 10m (Product #100046) - $9.99 (In Stock)\\n20. Ubiquiti UniFi AP AC Pro (Product #100045) - $139.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100047'\\n• 'Buy 1 of #100029 and 3 of #100047'\",\n            \"id\": 315,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:38:25.699704\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for networking products in the budget of $1000\",\n            \"id\": 316,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:39:47.356105\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.3,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 3 products in networking and under $1000.0:\\n\\n1. TP-Link Archer AX55 (Product #100034) - $129.99 (In Stock)\\n2. TP-Link Cat6 Ethernet Cable 10m (Product #100046) - $9.99 (In Stock)\\n3. Ubiquiti UniFi AP AC Pro (Product #100045) - $139.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100034'\\n• 'Buy 1 of #100046 and 3 of #100034'\",\n            \"id\": 317,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:39:47.356109\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to modify my username to DemoOo User\",\n            \"id\": 318,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:41:57.473022\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.23459391295909882,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 3 products in networking and under $1000.0:\\n\\n1. TP-Link Archer AX55 (Product #100034) - $129.99 (In Stock)\\n2. TP-Link Cat6 Ethernet Cable 10m (Product #100046) - $9.99 (In Stock)\\n3. Ubiquiti UniFi AP AC Pro (Product #100045) - $139.00 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100034'\\n• 'Buy 1 of #100046 and 3 of #100034'\",\n            \"id\": 319,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:41:57.473027\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to update my profile username to DemoOo User\",\n            \"id\": 320,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:42:21.432391\",\n            \"intent\": \"modify_user\",\n            \"confidence_score\": 0.3933202922344208,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I've updated your name to demooo. Is there anything else you'd like to update?\",\n            \"id\": 321,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:42:21.442920\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to create an order\",\n            \"id\": 322,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:43:19.397810\",\n            \"intent\": \"modify_user\",\n            \"confidence_score\": 0.15011730790138245,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I've updated your name to demooo. Is there anything else you'd like to update?\",\n            \"id\": 323,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:43:19.410397\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to purchase item #100026 and item #100047\",\n            \"id\": 324,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:43:49.186294\",\n            \"intent\": \"create_order\",\n            \"confidence_score\": 0.95,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Please provide a shipping address for your order. In the format of: 123 Main St, Anytown, Country, zipcode\",\n            \"id\": 325,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:43:49.186298\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"My shipping address is 40 Nineteenth st, New Cairo\",\n            \"id\": 326,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:44:42.968481\",\n            \"intent\": \"create_order\",\n            \"confidence_score\": 0.13511872291564941,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Great! I've placed your order (#7). The total amount is $1613.99. Your order status is pending. You can check your order status anytime by saying 'check order #7'.\",\n            \"id\": 327,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:44:43.012322\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to check the status of order #7 please\",\n            \"id\": 328,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:45:40.461989\",\n            \"intent\": \"create_order\",\n            \"confidence_score\": 0.27672135829925537,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Great! I've placed your order (#8). The total amount is $1613.99. Your order status is pending. You can check your order status anytime by saying 'check order #8'.\",\n            \"id\": 329,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:45:40.468066\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"check the status of order #7 please\",\n            \"id\": 330,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:46:09.847576\",\n            \"intent\": \"create_order\",\n            \"confidence_score\": 0.2179681360721588,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Great! I've placed your order (#9). The total amount is $1613.99. Your order status is pending. You can check your order status anytime by saying 'check order #9'.\",\n            \"id\": 331,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:46:09.853512\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"check order #7 please\",\n            \"id\": 332,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:46:31.556874\",\n            \"intent\": \"create_order\",\n            \"confidence_score\": 0.1062915250658989,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Great! I've placed your order (#10). The total amount is $1613.99. Your order status is pending. You can check your order status anytime by saying 'check order #10'.\",\n            \"id\": 333,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:46:31.561438\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"check order #7\",\n            \"id\": 334,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:46:46.933876\",\n            \"intent\": \"create_order\",\n            \"confidence_score\": 0.14130204916000366,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Great! I've placed your order (#11). The total amount is $1613.99. Your order status is pending. You can check your order status anytime by saying 'check order #11'.\",\n            \"id\": 335,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:46:46.939309\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"check order status for order #7\",\n            \"id\": 336,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:47:55.388956\",\n            \"intent\": \"create_order\",\n            \"confidence_score\": 0.20276854932308197,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I apologize, but I couldn't create your order: Insufficient stock for product Anker Mouse I Cable. Available: 0\",\n            \"id\": 337,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:47:55.388959\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for Available mouse\",\n            \"id\": 338,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:51:05.363987\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.4535485804080963,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 8 products in accessories and in stock:\\n\\n1. Anker Nano II 65W Charger (Product #100029) - $39.99 (In Stock)\\n2. Anker PowerExpand Elite Dock (Product #100038) - $269.99 (In Stock)\\n3. Apple Magic Keyboard (Product #100039) - $99.00 (In Stock)\\n4. Cooler Master Notepal X3 (Product #100037) - $49.99 (In Stock)\\n5. Logitech C920 HD Pro Webcam (Product #100030) - $69.99 (In Stock)\\n6. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n7. Mechanical Keyboard RK84 (Product #100028) - $89.99 (In Stock)\\n8. Samsonite Tectonic Backpack (Product #100031) - $79.99 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100029'\\n• 'Buy 1 of #100038 and 3 of #100029'\",\n            \"id\": 339,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:51:05.363991\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I am looking for mouse. it has to be available\",\n            \"id\": 340,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:52:22.104094\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.38807186484336853,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 1 product in accessories and in stock:\\n\\n1. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100027'\",\n            \"id\": 341,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:52:22.104097\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Check the status of my order number 7\",\n            \"id\": 342,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:53:24.558515\",\n            \"intent\": \"product_search\",\n            \"confidence_score\": 0.24870607256889343,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I found 8 products in accessories and in stock:\\n\\n1. Anker Nano II 65W Charger (Product #100029) - $39.99 (In Stock)\\n2. Anker PowerExpand Elite Dock (Product #100038) - $269.99 (In Stock)\\n3. Apple Magic Keyboard (Product #100039) - $99.00 (In Stock)\\n4. Cooler Master Notepal X3 (Product #100037) - $49.99 (In Stock)\\n5. Logitech C920 HD Pro Webcam (Product #100030) - $69.99 (In Stock)\\n6. Logitech MX Master 3 (Product #100027) - $99.99 (In Stock)\\n7. Mechanical Keyboard RK84 (Product #100028) - $89.99 (In Stock)\\n8. Samsonite Tectonic Backpack (Product #100031) - $79.99 (In Stock)\\n\\n\\nTo order any product, you can say something like:\\n• 'Order 2 of product #100029'\\n• 'Buy 1 of #100038 and 3 of #100029'\",\n            \"id\": 343,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:53:24.558519\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Please check the status of my order number 7\",\n            \"id\": 344,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:54:16.710940\",\n            \"intent\": \"order_status\",\n            \"confidence_score\": 0.20268797874450684,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Order #7 status: pending\\nTotal amount: $1613.99\\nOrdered on: 2025-06-18 02:44:42\\n\\nItems:\\n• Product #100026: 1x @ $1599.00 = $1599.00\\n• Product #100047: 1x @ $14.99 = $14.99\\n\",\n            \"id\": 345,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:54:16.710943\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Order #7 status: pending\\nTotal amount: $1613.99\\nOrdered on: 2025-06-18 02:44:42\\n\\nItems:\\n• Product #100026: 1x @ $1599.00 = $1599.00\\n• Product #100047: 1x @ $14.99 = $14.99\\n\",\n            \"id\": 347,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:55:01.640881\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to cancel order number 7\",\n            \"id\": 348,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:55:30.082548\",\n            \"intent\": \"order_status\",\n            \"confidence_score\": 0.18077342212200165,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Order #7 status: pending\\nTotal amount: $1613.99\\nOrdered on: 2025-06-18 02:44:42\\n\\nItems:\\n• Product #100026: 1x @ $1599.00 = $1599.00\\n• Product #100047: 1x @ $14.99 = $14.99\\n\",\n            \"id\": 349,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:55:30.082552\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to cancel order number 7 please\",\n            \"id\": 350,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:55:48.495150\",\n            \"intent\": \"order_status\",\n            \"confidence_score\": 0.16919586062431335,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"Order #7 status: pending\\nTotal amount: $1613.99\\nOrdered on: 2025-06-18 02:44:42\\n\\nItems:\\n• Product #100026: 1x @ $1599.00 = $1599.00\\n• Product #100047: 1x @ $14.99 = $14.99\\n\",\n            \"id\": 351,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:55:48.495154\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I want to cancel order number 7\",\n            \"id\": 352,\n            \"direction\": \"incoming\",\n            \"timestamp\": \"2025-06-18T02:58:10.597649\",\n            \"intent\": \"cancel_order\",\n            \"confidence_score\": 0.95,\n            \"function_calls\": null\n        },\n        {\n            \"content\": \"I've cancelled order #7. The order status is now cancelled. If you need to place a new order, just let me know!\",\n            \"id\": 353,\n            \"direction\": \"outgoing\",\n            \"timestamp\": \"2025-06-18T02:58:10.615720\",\n            \"intent\": null,\n            \"confidence_score\": null,\n            \"function_calls\": null\n        }\n    ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Search Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/search?brand=Dell&query=gaming&min_price=1&max_price=2000&in_stock=true&Category=laptops",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"search"
+							],
+							"query": [
+								{
+									"key": "brand",
+									"value": "Dell"
+								},
+								{
+									"key": "query",
+									"value": "gaming"
+								},
+								{
+									"key": "min_price",
+									"value": "1"
+								},
+								{
+									"key": "max_price",
+									"value": "2000"
+								},
+								{
+									"key": "in_stock",
+									"value": "true"
+								},
+								{
+									"key": "Category",
+									"value": "laptops"
+								}
+							]
+						},
+						"description": "Search products with filters"
+					},
+					"response": [
+						{
+							"name": "Search Products",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/products/search?brand=Dell&query=gaming&min_price=1&max_price=2000&in_stock=true&Category=laptops",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"products",
+										"search"
+									],
+									"query": [
+										{
+											"key": "brand",
+											"value": "Dell"
+										},
+										{
+											"key": "query",
+											"value": "gaming"
+										},
+										{
+											"key": "min_price",
+											"value": "1"
+										},
+										{
+											"key": "max_price",
+											"value": "2000"
+										},
+										{
+											"key": "in_stock",
+											"value": "true"
+										},
+										{
+											"key": "Category",
+											"value": "laptops"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:01:23 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "273"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"items\": [\n        {\n            \"name\": \"Dell XPS 13\",\n            \"description\": \"13-inch ultrabook with Intel i7 and 16GB RAM.\",\n            \"price\": 1199.99,\n            \"stock\": 9,\n            \"category\": \"laptops\",\n            \"id\": 100023,\n            \"created_at\": \"2025-06-16T03:27:14.796242\",\n            \"updated_at\": \"2025-06-18T01:16:22.285082\"\n        }\n    ],\n    \"total\": 1,\n    \"page\": 1,\n    \"page_size\": 20\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/100032",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"100032"
+							]
+						},
+						"description": "Get product details by ID"
+					},
+					"response": [
+						{
+							"name": "Get Product",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/products/100032",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"products",
+										"100032"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:01:52 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "233"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Samsung T7 Portable SSD 1TB\",\n    \"description\": \"Fast external storage with USB 3.2.\",\n    \"price\": 129.99,\n    \"stock\": 30,\n    \"category\": \"storage\",\n    \"id\": 100032,\n    \"created_at\": \"2025-06-16T03:27:14.796242\",\n    \"updated_at\": \"2025-06-16T03:27:14.796242\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Macbook M4 Max\",\n    \"description\": \"Latest Apple Macbook\",\n    \"price\": 1999.99,\n    \"brand\": \"Apple\",\n    \"category\": \"laptops\",\n    \"stock\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products"
+							]
+						},
+						"description": "Create a new product"
+					},
+					"response": [
+						{
+							"name": "Create Product",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Macbook M4 Max\",\n    \"description\": \"Latest Apple Macbook\",\n    \"price\": 1999.99,\n    \"brand\": \"Apple\",\n    \"category\": \"laptops\",\n    \"stock\": 10\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/products",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"products"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:02:35 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "206"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"Macbook M4 Max\",\n    \"description\": \"Latest Apple Macbook\",\n    \"price\": 1999.99,\n    \"stock\": 10,\n    \"category\": \"laptops\",\n    \"id\": 100048,\n    \"created_at\": \"2025-06-18T03:02:36.096676\",\n    \"updated_at\": \"2025-06-18T03:02:36.096691\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"items\": [\n        {\n            \"product_id\": 100032,\n            \"quantity\": 2\n        }\n    ],\n    \"shipping_address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zip\": \"10001\",\n        \"country\": \"USA\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/orders?user_id=7",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders"
+							],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "7"
+								}
+							]
+						},
+						"description": "Create a new order"
+					},
+					"response": [
+						{
+							"name": "Create Order",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"items\": [\n        {\n            \"product_id\": 100032,\n            \"quantity\": 2\n        }\n    ],\n    \"shipping_address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zip\": \"10001\",\n        \"country\": \"USA\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/orders?user_id=7",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders"
+									],
+									"query": [
+										{
+											"key": "user_id",
+											"value": "7"
+										}
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:04:23 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "358"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 12,\n    \"user_id\": 7,\n    \"status\": \"pending\",\n    \"created_at\": \"2025-06-18T03:04:23.494942\",\n    \"updated_at\": \"2025-06-18T03:04:23.494949\",\n    \"total_amount\": 259.98,\n    \"shipping_address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zip\": \"10001\",\n        \"country\": \"USA\"\n    },\n    \"notes\": null,\n    \"items\": [\n        {\n            \"product_id\": 100032,\n            \"quantity\": 2,\n            \"id\": 17,\n            \"unit_price\": 129.99,\n            \"total_price\": 259.98\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Order",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/orders/12",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"12"
+							]
+						},
+						"description": "Get order details by ID"
+					},
+					"response": [
+						{
+							"name": "Get Order",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/orders/12",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders",
+										"12"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:04:58 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "358"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 12,\n    \"user_id\": 7,\n    \"status\": \"pending\",\n    \"created_at\": \"2025-06-18T03:04:23.494942\",\n    \"updated_at\": \"2025-06-18T03:04:23.494949\",\n    \"total_amount\": 259.98,\n    \"shipping_address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zip\": \"10001\",\n        \"country\": \"USA\"\n    },\n    \"notes\": null,\n    \"items\": [\n        {\n            \"product_id\": 100032,\n            \"quantity\": 2,\n            \"id\": 17,\n            \"unit_price\": 129.99,\n            \"total_price\": 259.98\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Get User Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/orders/user/7",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"user",
+								"7"
+							]
+						},
+						"description": "Get all orders for a user"
+					},
+					"response": [
+						{
+							"name": "Get User Orders",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/orders/user/7",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders",
+										"user",
+										"7"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:05:19 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "2711"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 12,\n        \"user_id\": 7,\n        \"status\": \"pending\",\n        \"created_at\": \"2025-06-18T03:04:23.494942\",\n        \"updated_at\": \"2025-06-18T03:04:23.494949\",\n        \"total_amount\": 259.98,\n        \"shipping_address\": {\n            \"street\": \"123 Main St\",\n            \"city\": \"New York\",\n            \"state\": \"NY\",\n            \"zip\": \"10001\",\n            \"country\": \"USA\"\n        },\n        \"notes\": null,\n        \"items\": [\n            {\n                \"product_id\": 100032,\n                \"quantity\": 2,\n                \"id\": 17,\n                \"unit_price\": 129.99,\n                \"total_price\": 259.98\n            }\n        ]\n    },\n    {\n        \"id\": 11,\n        \"user_id\": 7,\n        \"status\": \"pending\",\n        \"created_at\": \"2025-06-18T02:46:46.934772\",\n        \"updated_at\": \"2025-06-18T02:46:46.934775\",\n        \"total_amount\": 1613.99,\n        \"shipping_address\": {\n            \"country\": \"Egypt\",\n            \"street\": \"40 Nineteenth st\",\n            \"city\": \"Nineteenth st\",\n            \"state\": \"Unknown Governorate\",\n            \"zip\": \"00000\"\n        },\n        \"notes\": null,\n        \"items\": [\n            {\n                \"product_id\": 100026,\n                \"quantity\": 1,\n                \"id\": 15,\n                \"unit_price\": 1599,\n                \"total_price\": 1599\n            },\n            {\n                \"product_id\": 100047,\n                \"quantity\": 1,\n                \"id\": 16,\n                \"unit_price\": 14.99,\n                \"total_price\": 14.99\n            }\n        ]\n    },\n    {\n        \"id\": 10,\n        \"user_id\": 7,\n        \"status\": \"pending\",\n        \"created_at\": \"2025-06-18T02:46:31.557675\",\n        \"updated_at\": \"2025-06-18T02:46:31.557678\",\n        \"total_amount\": 1613.99,\n        \"shipping_address\": {\n            \"country\": \"Egypt\",\n            \"street\": \"40 Nineteenth st\",\n            \"city\": \"Nineteenth st\",\n            \"state\": \"Unknown Governorate\",\n            \"zip\": \"00000\"\n        },\n        \"notes\": null,\n        \"items\": [\n            {\n                \"product_id\": 100026,\n                \"quantity\": 1,\n                \"id\": 13,\n                \"unit_price\": 1599,\n                \"total_price\": 1599\n            },\n            {\n                \"product_id\": 100047,\n                \"quantity\": 1,\n                \"id\": 14,\n                \"unit_price\": 14.99,\n                \"total_price\": 14.99\n            }\n        ]\n    },\n    {\n        \"id\": 9,\n        \"user_id\": 7,\n        \"status\": \"pending\",\n        \"created_at\": \"2025-06-18T02:46:09.848629\",\n        \"updated_at\": \"2025-06-18T02:46:09.848631\",\n        \"total_amount\": 1613.99,\n        \"shipping_address\": {\n            \"country\": \"Egypt\",\n            \"street\": \"40 Nineteenth st\",\n            \"city\": \"Nineteenth st\",\n            \"state\": \"Unknown Governorate\",\n            \"zip\": \"00000\"\n        },\n        \"notes\": null,\n        \"items\": [\n            {\n                \"product_id\": 100026,\n                \"quantity\": 1,\n                \"id\": 11,\n                \"unit_price\": 1599,\n                \"total_price\": 1599\n            },\n            {\n                \"product_id\": 100047,\n                \"quantity\": 1,\n                \"id\": 12,\n                \"unit_price\": 14.99,\n                \"total_price\": 14.99\n            }\n        ]\n    },\n    {\n        \"id\": 8,\n        \"user_id\": 7,\n        \"status\": \"pending\",\n        \"created_at\": \"2025-06-18T02:45:40.462898\",\n        \"updated_at\": \"2025-06-18T02:45:40.462901\",\n        \"total_amount\": 1613.99,\n        \"shipping_address\": {\n            \"country\": \"Egypt\",\n            \"street\": \"40 Nineteenth st\",\n            \"city\": \"Nineteenth st\",\n            \"state\": \"Unknown Governorate\",\n            \"zip\": \"00000\"\n        },\n        \"notes\": null,\n        \"items\": [\n            {\n                \"product_id\": 100026,\n                \"quantity\": 1,\n                \"id\": 9,\n                \"unit_price\": 1599,\n                \"total_price\": 1599\n            },\n            {\n                \"product_id\": 100047,\n                \"quantity\": 1,\n                \"id\": 10,\n                \"unit_price\": 14.99,\n                \"total_price\": 14.99\n            }\n        ]\n    },\n    {\n        \"id\": 7,\n        \"user_id\": 7,\n        \"status\": \"cancelled\",\n        \"created_at\": \"2025-06-18T02:44:42.976423\",\n        \"updated_at\": \"2025-06-18T02:58:10.595827\",\n        \"total_amount\": 1613.99,\n        \"shipping_address\": {\n            \"country\": \"Egypt\",\n            \"street\": \"40 Nineteenth st\",\n            \"city\": \"Nineteenth st\",\n            \"state\": \"Unknown Governorate\",\n            \"zip\": \"00000\"\n        },\n        \"notes\": null,\n        \"items\": [\n            {\n                \"product_id\": 100026,\n                \"quantity\": 1,\n                \"id\": 7,\n                \"unit_price\": 1599,\n                \"total_price\": 1599\n            },\n            {\n                \"product_id\": 100047,\n                \"quantity\": 1,\n                \"id\": 8,\n                \"unit_price\": 14.99,\n                \"total_price\": 14.99\n            }\n        ]\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"cancelled\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/orders/12/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"orders",
+								"12",
+								"status"
+							]
+						},
+						"description": "Update order status (e.g., cancel order)"
+					},
+					"response": [
+						{
+							"name": "Update Order Status",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"cancelled\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/orders/12/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"orders",
+										"12",
+										"status"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "date",
+									"value": "Wed, 18 Jun 2025 03:06:08 GMT"
+								},
+								{
+									"key": "server",
+									"value": "uvicorn"
+								},
+								{
+									"key": "content-length",
+									"value": "360"
+								},
+								{
+									"key": "content-type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 12,\n    \"user_id\": 7,\n    \"status\": \"cancelled\",\n    \"created_at\": \"2025-06-18T03:04:23.494942\",\n    \"updated_at\": \"2025-06-18T03:06:09.018187\",\n    \"total_amount\": 259.98,\n    \"shipping_address\": {\n        \"street\": \"123 Main St\",\n        \"city\": \"New York\",\n        \"state\": \"NY\",\n        \"zip\": \"10001\",\n        \"country\": \"USA\"\n    },\n    \"notes\": null,\n    \"items\": [\n        {\n            \"product_id\": 100032,\n            \"quantity\": 2,\n            \"id\": 17,\n            \"unit_price\": 129.99,\n            \"total_price\": 259.98\n        }\n    ]\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		}
+	]
+}
