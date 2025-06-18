@@ -153,6 +153,18 @@ class ChatService:
                     "order_id": "integer"
                 }
             },
+            Intent.CANCEL_ORDER: {
+                "name": "cancel_order",
+                "description": "Cancel an existing order",
+                "parameters": {
+                    "order_id": "integer"
+                },
+                "examples": [
+                    "Cancel order #123",
+                    "Cancel my order 456",
+                    "I want to cancel order #789"
+                ]
+            },
             Intent.MODIFY_USER: {
                 "name": "modify_user",
                 "description": "Update user account information",
@@ -202,7 +214,7 @@ class ChatService:
         if confidence < 0.3 and current_context:
             stored_intent = Intent(current_context.get('current_intent'))
             # Check if we're in the middle of a multi-step interaction
-            if stored_intent in [Intent.MODIFY_USER, Intent.PRODUCT_SEARCH, Intent.ORDER_STATUS, Intent.CREATE_ORDER]:
+            if stored_intent in [Intent.MODIFY_USER, Intent.PRODUCT_SEARCH, Intent.ORDER_STATUS, Intent.CREATE_ORDER, Intent.CANCEL_ORDER]:
                 intent = stored_intent
                 # Merge current parameters with context parameters
                 context_params = current_context.get('params', {})
@@ -465,6 +477,51 @@ class ChatService:
                         function_result = {"error": str(e)}
                         status = FunctionCallStatus.FAILED
                         bot_message.content = f"I apologize, but I encountered an error while checking your order status: {str(e)}"
+                elif intent == Intent.CANCEL_ORDER:
+                    if not conversation.user_id:
+                        raise ValueError("You must be logged in to cancel an order.")
+                    
+                    # Validate required parameters
+                    if not params.get('order_id'):
+                        bot_message.content = "Please provide the order number you want to cancel. For example: 'cancel order #123'"
+                        self.db.add(bot_message)
+                        self.db.commit()
+                        self.db.refresh(bot_message)
+                        self.db.refresh(user_message)
+                        return user_message, bot_message
+                    
+                    try:
+                        # Try to cancel the order
+                        order = self.order_service.cancel_order(params['order_id'], conversation.user_id)
+                        
+                        # Format the response
+                        function_result = {
+                            "order_id": order.id,
+                            "status": order.status.value,
+                            "cancelled_at": datetime.utcnow().isoformat()
+                        }
+                        status = FunctionCallStatus.COMPLETED
+                        
+                        # Generate success message
+                        bot_message.content = (
+                            f"I've cancelled order #{order.id}. "
+                            f"The order status is now {order.status.value}. "
+                            "If you need to place a new order, just let me know!"
+                        )
+                        
+                    except ResourceNotFoundError:
+                        function_result = {"error": f"Order #{params['order_id']} not found"}
+                        status = FunctionCallStatus.FAILED
+                        bot_message.content = f"I couldn't find order #{params['order_id']}. Please check the order number and try again."
+                    except ValueError as e:
+                        function_result = {"error": str(e)}
+                        status = FunctionCallStatus.FAILED
+                        bot_message.content = str(e)
+                    except Exception as e:
+                        logger.error(f"Error cancelling order: {str(e)}")
+                        function_result = {"error": str(e)}
+                        status = FunctionCallStatus.FAILED
+                        bot_message.content = f"I apologize, but I encountered an error while trying to cancel your order: {str(e)}"
                 else:
                     # Handle other function calls here
                     function_result = None
@@ -578,6 +635,17 @@ class ChatService:
             if order_id:
                 return f"Let me check the status of order #{order_id}..."
             return "Could you please provide your order number?"
+        
+        elif intent == Intent.CANCEL_ORDER:
+            order_id = params.get('order_id')
+            
+            # If we're in cancel order context but missing order ID
+            if not order_id and context and context.get('current_intent') == Intent.CANCEL_ORDER.value:
+                return "Could you please provide the order number you want to cancel? It should be a number like #1234"
+            
+            if order_id:
+                return f"I'll help you cancel order #{order_id}..."
+            return "Which order would you like to cancel? Please provide the order number."
         
         elif intent == Intent.HELP:
             return ("I'm here to help! You can:\n"

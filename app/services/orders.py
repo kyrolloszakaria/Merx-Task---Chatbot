@@ -130,4 +130,21 @@ class OrderService:
             OrderStatus.CANCELLED: set()  # No transitions from CANCELLED
         }
         
-        return new_status in valid_transitions.get(current_status, set()) 
+        return new_status in valid_transitions.get(current_status, set())
+    
+    def cancel_order(self, order_id: int, user_id: Optional[int] = None) -> Order:
+        """Cancel an order by ID.
+        
+        Args:
+            order_id: The ID of the order to cancel
+            user_id: Optional user ID to validate order ownership
+            
+        Returns:
+            The cancelled order
+            
+        Raises:
+            ResourceNotFoundError: If order not found
+            ValueError: If order cannot be cancelled
+        """
+        status_update = OrderStatusUpdate(status=OrderStatus.CANCELLED)
+        return self.update_order_status(order_id, status_update, user_id) 

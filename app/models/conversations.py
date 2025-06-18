@@ -16,6 +16,7 @@ class Intent(enum.Enum):
     HELP = "help"
     MODIFY_USER = "modify_user"
     CREATE_ORDER = "create_order"
+    CANCEL_ORDER = "cancel_order"
     UNKNOWN = "unknown"
 
 class FunctionCallStatus(enum.Enum):

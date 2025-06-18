@@ -144,11 +144,30 @@ class NLUService:
                 "want to buy",
                 "need to purchase",
                 "would like to order",
-                "want to purchase"
+                "want to purchase",
                 # Quantity specific
                 "order quantity of",
                 "buy multiple of",
                 "purchase several of"
+            ],
+            Intent.CANCEL_ORDER: [
+                # Basic cancel intents
+                "cancel order",
+                "cancel my order",
+                "stop order",
+                "remove order",
+                # Status-based cancellations
+                "cancel pending order",
+                "cancel recent order",
+                # Specific order references
+                "cancel order number",
+                "cancel order with id",
+                "cancel order #",
+                # Intent expressions
+                "want to cancel order",
+                "would like to cancel order",
+                "need to cancel order",
+                "please cancel order"
             ]
         }
 
@@ -166,9 +185,20 @@ class NLUService:
             r'add\s+(?:item|product)\s*#?\d+\s+to\s+(?:my\s+)?cart'
         ]
         
+        # Add cancel order patterns
+        cancel_patterns = [
+            r'cancel\s+(?:my\s+)?order\s*#?\d+',
+            r'(?:want|would like|need)\s+to\s+cancel\s+(?:my\s+)?order\s*#?\d+',
+            r'stop\s+(?:my\s+)?order\s*#?\d+'
+        ]
+        
         for pattern in order_patterns:
             if re.search(pattern, text_lower):
                 return Intent.CREATE_ORDER, 0.95
+                
+        for pattern in cancel_patterns:
+            if re.search(pattern, text_lower):
+                return Intent.CANCEL_ORDER, 0.95
         
         # Flatten all possible labels
         all_labels = []
@@ -303,7 +333,7 @@ class NLUService:
             if page_size is not None:
                 params['page_size'] = page_size
 
-        elif intent == Intent.ORDER_STATUS:
+        elif intent == Intent.ORDER_STATUS or intent == Intent.CANCEL_ORDER:
             # Extract order number using pattern matching and NER
             order_id = self._extract_order_id(text, doc)
             if order_id:
