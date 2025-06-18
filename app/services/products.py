@@ -59,22 +59,23 @@ class ProductService:
     ) -> Tuple[List[Product], int]:
         """
         Search for products with various filters.
+        If no results found and query filter exists, it will be removed.
         Returns a tuple of (products, total_count).
         """
         query = self.db.query(Product)
         
         # Build filter conditions
         conditions = []
+        query_condition = None
         
         # Text search in name and description
         if search_params.query:
             search_term = f"%{search_params.query}%"
-            conditions.append(
-                or_(
-                    Product.name.ilike(search_term),
-                    Product.description.ilike(search_term)
-                )
+            query_condition = or_(
+                Product.name.ilike(search_term),
+                Product.description.ilike(search_term)
             )
+            conditions.append(query_condition)
         
         # Brand search (in name or description)
         if search_params.brand:
@@ -117,6 +118,16 @@ class ProductService:
         
         # Get total count before pagination
         total = query.count()
+
+        # If no results and we have a query filter, try without it
+        if total == 0 and query_condition is not None:
+            # Remove the query condition from conditions
+            conditions.remove(query_condition)
+            # Reapply remaining filters
+            query = self.db.query(Product)
+            if conditions:
+                query = query.filter(and_(*conditions))
+            total = query.count()
         
         # Apply pagination
         query = query.order_by(Product.name).offset(skip).limit(limit)

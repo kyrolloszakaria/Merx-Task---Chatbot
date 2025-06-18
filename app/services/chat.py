@@ -211,7 +211,7 @@ class ChatService:
         params = self.nlu.extract_parameters(message_data.content, intent)
 
         # Handle context and low confidence cases
-        if confidence < 0.3 and current_context:
+        if confidence < 0.2 and current_context:
             stored_intent = Intent(current_context.get('current_intent'))
             # Check if we're in the middle of a multi-step interaction
             if stored_intent in [Intent.MODIFY_USER, Intent.PRODUCT_SEARCH, Intent.ORDER_STATUS, Intent.CREATE_ORDER, Intent.CANCEL_ORDER]:

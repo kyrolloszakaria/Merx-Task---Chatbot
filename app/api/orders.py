@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 def create_order(
     order: OrderCreate,
-    user_id: int,  # TODO: Get from auth token
+    user_id: int, 
     db: Session = Depends(get_db)
 ):
     """
@@ -31,7 +31,7 @@ def create_order(
 @router.get("/{order_id}", response_model=OrderResponse)
 def get_order(
     order_id: int,
-    user_id: int = None,  # TODO: Get from auth token
+    user_id: int = None, 
     db: Session = Depends(get_db)
 ):
     """
@@ -61,7 +61,7 @@ def get_user_orders(
 def update_order_status(
     order_id: int,
     status_update: OrderStatusUpdate,
-    user_id: int = None,  # TODO: Get from auth token
+    user_id: int = None, 
     db: Session = Depends(get_db)
 ):
     """

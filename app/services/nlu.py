@@ -187,9 +187,10 @@ class NLUService:
         
         # Add cancel order patterns
         cancel_patterns = [
-            r'cancel\s+(?:my\s+)?order\s*#?\d+',
-            r'(?:want|would like|need)\s+to\s+cancel\s+(?:my\s+)?order\s*#?\d+',
-            r'stop\s+(?:my\s+)?order\s*#?\d+'
+            r'cancel\s+(?:my\s+)?order(?:\s+(?:number|#))?\s*\d+',
+            r'(?:want|would like|need)\s+to\s+cancel\s+(?:my\s+)?order(?:\s+(?:number|#))?\s*\d+',
+            r'stop\s+(?:my\s+)?order(?:\s+(?:number|#))?\s*\d+',
+            r'cancel\s+(?:my\s+)?order\s*(?:number|#)?\s*\d+'
         ]
         
         for pattern in order_patterns:
@@ -528,7 +529,7 @@ class NLUService:
                 'ultrabook', 'workstation', 'Dell', 'Acer', "Asus"
             ],
             'accessories': [
-                'accessory', 'mouse', 'keyboard', 'charger',
+                'accessory', 'accessories', 'mouse', 'keyboard', 'charger',
                 'adapter', 'cable', 'bag', 'case', 'sleeve',
                 'stand', 'cooling pad', 'webcam', 'headphones',
                 'speakers', 'microphone', 'dock', 'hub'
@@ -541,11 +542,11 @@ class NLUService:
                 'ram', 'memory', 'memory upgrade', 'ddr4', 'ddr5'
             ],
             'displays': [
-                'monitor', 'display', 'screen', 'external monitor',
+                'monitor', 'display','displays', 'screen', 'external monitor',
                 'portable monitor', 'hdmi', 'displayport'
             ],
             'networking': [
-                'wifi', 'ethernet', 'network card', 'bluetooth adapter',
+                'networking', 'wifi', 'ethernet', 'network card', 'bluetooth adapter',
                 'router', 'network cable'
             ]
         }
