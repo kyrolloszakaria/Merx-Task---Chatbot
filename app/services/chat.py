@@ -407,6 +407,64 @@ class ChatService:
                         function_result = {"error": str(e)}
                         status = FunctionCallStatus.FAILED
                         bot_message.content = f"I apologize, but I couldn't create your order: {str(e)}"
+                elif intent == Intent.ORDER_STATUS:
+                    if not conversation.user_id:
+                        raise ValueError("You must be logged in to check order status.")
+                    
+                    # Validate required parameters
+                    if not params.get('order_id'):
+                        bot_message.content = "Please provide your order number. For example: 'check order #123'"
+                        self.db.add(bot_message)
+                        self.db.commit()
+                        self.db.refresh(bot_message)
+                        self.db.refresh(user_message)
+                        return user_message, bot_message
+                    
+                    try:
+                        # Get order status
+                        order = self.order_service.get_order(conversation.user_id, params['order_id'])
+                        
+                        # Format the response
+                        function_result = {
+                            "order_id": order.id,
+                            "status": order.status.value,
+                            "total_amount": order.total_amount,
+                            "created_at": order.created_at.isoformat(),
+                            "items": [
+                                {
+                                    "product_id": item.product_id,
+                                    "quantity": item.quantity,
+                                    "unit_price": item.unit_price,
+                                    "total_price": item.total_price
+                                }
+                                for item in order.items
+                            ]
+                        }
+                        status = FunctionCallStatus.COMPLETED
+                        
+                        # Generate success message
+                        bot_message.content = (
+                            f"Order #{order.id} status: {order.status.value}\n"
+                            f"Total amount: ${order.total_amount:.2f}\n"
+                            f"Ordered on: {order.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                            "Items:\n"
+                        )
+                        
+                        for item in order.items:
+                            bot_message.content += (
+                                f"• Product #{item.product_id}: {item.quantity}x "
+                                f"@ ${item.unit_price:.2f} = ${item.total_price:.2f}\n"
+                            )
+                        
+                    except ResourceNotFoundError:
+                        function_result = {"error": f"Order #{params['order_id']} not found"}
+                        status = FunctionCallStatus.FAILED
+                        bot_message.content = f"I couldn't find order #{params['order_id']}. Please check the order number and try again."
+                    except Exception as e:
+                        logger.error(f"Error checking order status: {str(e)}")
+                        function_result = {"error": str(e)}
+                        status = FunctionCallStatus.FAILED
+                        bot_message.content = f"I apologize, but I encountered an error while checking your order status: {str(e)}"
                 else:
                     # Handle other function calls here
                     function_result = None

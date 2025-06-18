@@ -540,23 +540,29 @@ class NLUService:
         """Extract order ID using pattern matching and NER."""
         # Try pattern matching first
         patterns = [
-            r'order\s*#?\s*(\d{4,})',
-            r'#\s*(\d{4,})',
-            r'order\s*number\s*(\d{4,})',
-            r'order\s*id\s*(\d{4,})'
+            r'order\s*#?\s*(\d+)',  # Match any number of digits
+            r'#\s*(\d+)',
+            r'order\s*number\s*(\d+)',
+            r'order\s*id\s*(\d+)'
         ]
         
         for pattern in patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                return int(match.group(1))
+                try:
+                    return int(match.group(1))
+                except ValueError:
+                    continue
         
         # Try NER as fallback
         for ent in doc.ents:
             if ent.label_ == "CARDINAL":
-                number = re.findall(r'\d{4,}', ent.text)
+                number = re.findall(r'\d+', ent.text)
                 if number:
-                    return int(number[0])
+                    try:
+                        return int(number[0])
+                    except ValueError:
+                        continue
         
         return None
 
