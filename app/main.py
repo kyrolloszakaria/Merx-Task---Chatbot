@@ -21,14 +21,12 @@ app = FastAPI(
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# API Key authentication
-API_KEY_HEADER = APIKeyHeader(name="X-API-Key")
 
 # Exception handlers
 @app.exception_handler(UserAlreadyExistsError)
