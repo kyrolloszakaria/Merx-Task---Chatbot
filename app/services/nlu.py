@@ -1,6 +1,6 @@
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import torch
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional, Any
 import numpy as np
 from app.models.conversations import Intent
 import logging
@@ -112,10 +112,64 @@ class NLUService:
                 "change email",
                 "update name",
                 "change name"
+            ],
+            Intent.CREATE_ORDER: [
+                # Basic order intents
+                "place order",
+                "make order",
+                "create order",
+                "submit order",
+                "process order",
+                # Purchase variations
+                "buy item",
+                "purchase item",
+                "order item",
+                # Multiple items
+                "order multiple items",
+                "buy several items",
+                # Specific product references
+                "order product number",
+                "buy product with id",
+                "purchase item number",
+                "order item with id",
+                "make an order with item",
+                "place order for item",
+                # Cart actions
+                "add to cart",
+                "proceed to checkout",
+                "complete purchase",
+                "finalize order",
+                # Want/Need expressions
+                "want to order",
+                "want to buy",
+                "need to purchase",
+                "would like to order",
+                "want to purchase"
+                # Quantity specific
+                "order quantity of",
+                "buy multiple of",
+                "purchase several of"
             ]
         }
 
     def detect_intent(self, text: str) -> Tuple[Intent, float]:
+        """Detect the intent of a message using a combination of pattern matching and zero-shot classification."""
+        # Pre-process text for better matching
+        text_lower = text.lower()
+        
+        # Direct pattern matching for high-confidence cases
+        order_patterns = [
+            r'(?:want|would like)\s+to\s+(?:order|purchase|buy)\s+(?:\d+\s+)?(?:item|product)\s*#?\d+',
+            r'(?:order|purchase|buy)\s+(?:\d+\s+)?(?:item|product)\s*#?\d+',
+            r'make\s+(?:an\s+)?order\s+(?:with|for)\s+(?:item|product)\s*#?\d+',
+            r'place\s+(?:an\s+)?order\s+(?:with|for)\s+(?:item|product)\s*#?\d+',
+            r'add\s+(?:item|product)\s*#?\d+\s+to\s+(?:my\s+)?cart'
+        ]
+        
+        for pattern in order_patterns:
+            if re.search(pattern, text_lower):
+                return Intent.CREATE_ORDER, 0.95
+        
         # Flatten all possible labels
         all_labels = []
         label_to_intent = {}
@@ -138,14 +192,36 @@ class NLUService:
         
         # Lowered threshold to 0.2
         if confidence < 0.2:
-            # Fallback: simple keyword match
-            for label, intent in label_to_intent.items():
-                if label in text.lower():
-                    return intent, 0.2
+            # Check for order-related keywords and patterns
+            order_keywords = [
+                (r'\b(?:order|purchase|buy)\b.*\b(?:item|product)\s*#?\d+\b', Intent.CREATE_ORDER),
+                (r'\b(?:want|would like)\s+to\s+(?:order|purchase|buy)\b', Intent.CREATE_ORDER),
+                (r'\b(?:find|search|show|looking)\s+for\b', Intent.PRODUCT_SEARCH),
+                (r'\b(?:status|track|where)\b.*\border\b', Intent.ORDER_STATUS),
+                (r'\b(?:update|change|modify)\b.*\b(?:profile|account|name|email)\b', Intent.MODIFY_USER),
+                (r'\b(?:hi|hello|hey)\b', Intent.GREETING),
+                (r'\b(?:help|support|guide)\b', Intent.HELP)
+            ]
+            
+            for pattern, intent in order_keywords:
+                if re.search(pattern, text_lower):
+                    return intent, 0.3
+            
             return Intent.UNKNOWN, confidence
             
         # Map the label back to our Intent enum
         detected_intent = label_to_intent[best_label]
+        
+        # Post-detection validation
+        # If we detected PRODUCT_SEARCH but the text matches order patterns, override to CREATE_ORDER
+        if detected_intent == Intent.PRODUCT_SEARCH:
+            order_indicators = [
+                r'\b(?:order|purchase|buy)\b.*\b(?:item|product)\s*#?\d+\b',
+                r'\b(?:want|would like)\s+to\s+(?:order|purchase|buy)\b.*\b(?:item|product)\s*#?\d+\b'
+            ]
+            for pattern in order_indicators:
+                if re.search(pattern, text_lower):
+                    return Intent.CREATE_ORDER, 0.9
         
         return detected_intent, confidence
 
@@ -238,6 +314,22 @@ class NLUService:
             user_data = self._extract_user_data(text, doc)
             if user_data:
                 params['user_data'] = user_data
+        
+        elif intent == Intent.CREATE_ORDER:
+            # Extract product IDs and quantities
+            products = self._extract_order_items(text, doc)
+            if products:
+                params['items'] = products
+            
+            # Extract shipping address if provided
+            shipping_address = self._extract_shipping_address(text, doc)
+            if shipping_address:
+                params['shipping_address'] = shipping_address
+            
+            # Extract any additional notes
+            notes = self._extract_order_notes(text, doc)
+            if notes:
+                params['notes'] = notes
         
         return params
 
@@ -524,3 +616,266 @@ class NLUService:
             'networking': ['network', 'networking', 'wifi', 'ethernet']
         }
         return category_keywords.get(category.lower(), []) 
+
+    def _extract_order_items(self, text: str, doc: spacy.tokens.Doc) -> List[Dict[str, Any]]:
+        """Extract product IDs and quantities from order text using both spaCy and regex.
+        
+        This enhanced version uses:
+        1. spaCy's dependency parsing to understand quantity-product relationships
+        2. Named Entity Recognition for numbers and quantities
+        3. Pattern matching as a fallback
+        4. Token-based analysis for better quantity understanding
+        """
+        items = []
+        processed_products = set()  # Track processed product IDs to avoid duplicates
+        
+        # First pass: Look for explicit product ID patterns
+        product_id_patterns = [
+            r'item\s*#?(\d{5,})',  # Match item #XXXXX (5+ digits)
+            r'product\s*#?(\d{5,})',  # Match product #XXXXX (5+ digits)
+            r'#(\d{5,})',  # Match #XXXXX (5+ digits)
+        ]
+        
+        found_product_ids = []
+        for pattern in product_id_patterns:
+            matches = re.finditer(pattern, text, re.IGNORECASE)
+            for match in matches:
+                product_id = int(match.group(1))
+                if product_id not in processed_products:
+                    found_product_ids.append(product_id)
+                    processed_products.add(product_id)
+        
+        # If we found product IDs, look for quantities
+        if found_product_ids:
+            # Look for explicit quantities before the product ID
+            quantity_patterns = [
+                r'(\d+)\s*(?:x|pieces?|units?|pcs?|items?)?\s*(?:of)?\s*(?:item|product)?\s*#?\d{5,}',
+                r'(?:buy|purchase|order)\s+(\d+)\s*(?:x|pieces?|units?|pcs?|items?)?\s*(?:of)?\s*(?:item|product)?\s*#?\d{5,}'
+            ]
+            
+            quantities = []
+            for pattern in quantity_patterns:
+                matches = re.finditer(pattern, text, re.IGNORECASE)
+                for match in matches:
+                    try:
+                        quantity = int(match.group(1))
+                        if 1 <= quantity <= 100:  # Validate quantity range
+                            quantities.append(quantity)
+                    except (ValueError, IndexError):
+                        continue
+            
+            # If no explicit quantity found, look for number words
+            if not quantities:
+                number_map = {
+                    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+                    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10
+                }
+                
+                for word, number in number_map.items():
+                    if word in text.lower():
+                        quantities.append(number)
+                        break
+            
+            # If still no quantity found, default to 1
+            if not quantities:
+                quantities = [1]
+            
+            # Match quantities with product IDs
+            for i, product_id in enumerate(found_product_ids):
+                quantity = quantities[i] if i < len(quantities) else quantities[-1]
+                items.append({
+                    "product_id": product_id,
+                    "quantity": quantity
+                })
+            
+            return items
+        
+        # Second pass: Use spaCy's dependency parsing
+        for token in doc:
+            # Look for numbers that might be quantities
+            if token.like_num:
+                quantity = None
+                product_id = None
+                
+                # Try to convert the token to a number
+                try:
+                    quantity = int(token.text)
+                except ValueError:
+                    # Handle written numbers (e.g., "two", "three")
+                    number_map = {
+                        "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+                        "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10
+                    }
+                    quantity = number_map.get(token.text.lower())
+                
+                if not quantity:
+                    continue
+                    
+                # Look for product ID in the dependency tree
+                for child in token.children:
+                    # Check if this might be a product reference
+                    if child.like_num:
+                        try:
+                            potential_id = int(child.text)
+                            if potential_id > 10000:  #  product IDs are 5+ digits
+                                product_id = potential_id
+                                break
+                        except ValueError:
+                            continue
+                    
+                    # Check for product/item mentions
+                    if child.text.lower() in ['product', 'item', '#']:
+                        # Look for the actual ID in the next tokens
+                        next_token = child.rights
+                        for nt in next_token:
+                            if nt.like_num:
+                                try:
+                                    potential_id = int(nt.text)
+                                    if potential_id > 10000:  #  product IDs are 5+ digits
+                                        product_id = potential_id
+                                        break
+                                except ValueError:
+                                    continue
+                
+                # Also check the head (parent) token for product references
+                if not product_id and token.head.text.lower() in ['product', 'item', '#']:
+                    # Look for the ID in siblings
+                    for sibling in token.head.children:
+                        if sibling.like_num and sibling != token:
+                            try:
+                                potential_id = int(sibling.text)
+                                if potential_id > 10000:  # product IDs are 5+ digits
+                                    product_id = potential_id
+                                    break
+                            except ValueError:
+                                continue
+                
+                if quantity and product_id and product_id not in processed_products:
+                    if 1 <= quantity <= 100:  # Validate quantity range
+                        items.append({
+                            "product_id": product_id,
+                            "quantity": quantity
+                        })
+                        processed_products.add(product_id)
+        
+        # If no items found yet, try one final pattern matching pass
+        if not items:
+            # Look for any remaining product IDs with implicit quantity of 1
+            for pattern in product_id_patterns:
+                matches = re.finditer(pattern, text, re.IGNORECASE)
+                for match in matches:
+                    product_id = int(match.group(1))
+                    if product_id > 10000 and product_id not in processed_products:  # Assume product IDs are 5+ digits
+                        items.append({
+                            "product_id": product_id,
+                            "quantity": 1
+                        })
+                        processed_products.add(product_id)
+        
+        return items if items else None
+
+    def _extract_shipping_address(self, text: str, doc: spacy.tokens.Doc) -> Optional[Dict[str, str]]:
+        """Extract shipping address from text and return it as a structured dictionary."""
+        # Look for address indicators
+        address_indicators = [
+            r'ship(?:ping)?\s+(?:to|address)(?:\s+is)?[\s:]+([^\.]+)',
+            r'deliver(?:y)?\s+(?:to|address)(?:\s+is)?[\s:]+([^\.]+)',
+            r'address[\s:]+([^\.]+)',
+        ]
+        
+        raw_address = None
+        
+        # Try pattern matching first
+        for pattern in address_indicators:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                raw_address = match.group(1).strip()
+                break
+        
+        # If no match found, try NER
+        if not raw_address:
+            address_parts = []
+            for ent in doc.ents:
+                if ent.label_ in ['GPE', 'LOC', 'FAC']:
+                    address_parts.append(ent.text)
+            if address_parts:
+                raw_address = ' '.join(address_parts)
+        
+        if not raw_address:
+            return None
+            
+        # Now parse the raw address into components
+        address_dict = {"country": "Egypt"}  # Default country
+        
+        # Extract street number and name
+        street_match = re.search(r'(\d+\s+[^,]+)(?:,|\s+)', raw_address)
+        if street_match:
+            address_dict["street"] = street_match.group(1).strip()
+        else:
+            # Fallback: take everything before the first comma or the whole string
+            street_parts = raw_address.split(',')[0].strip()
+            address_dict["street"] = street_parts
+        
+        # Extract city
+        city_match = re.search(r'(?:,\s*|\s+)((?:New\s+)?[A-Za-z\s]+)(?:,|\s*$)', raw_address)
+        if city_match:
+            address_dict["city"] = city_match.group(1).strip()
+        else:
+            # Look for city in the NER entities
+            for ent in doc.ents:
+                if ent.label_ == 'GPE':
+                    address_dict["city"] = ent.text
+                    break
+        
+        # If we don't have a city yet, look for common Egyptian cities
+        if "city" not in address_dict:
+            egyptian_cities = [
+                "Cairo", "New Cairo", "Alexandria", "Giza", "Sharm El Sheikh", 
+                "Hurghada", "Luxor", "Aswan", "Mansoura", "Tanta", "Zagazig"
+            ]
+            for city in egyptian_cities:
+                if city.lower() in raw_address.lower():
+                    address_dict["city"] = city
+                    break
+        
+        # Add state/governorate for Egypt
+        if "city" in address_dict:
+            if "cairo" in address_dict["city"].lower():
+                address_dict["state"] = "Cairo Governorate"
+            elif "alexandria" in address_dict["city"].lower():
+                address_dict["state"] = "Alexandria Governorate"
+            elif "giza" in address_dict["city"].lower():
+                address_dict["state"] = "Giza Governorate"
+            else:
+                address_dict["state"] = "Unknown Governorate"
+        
+        # Extract postal code if present
+        zip_match = re.search(r'\b\d{5}\b', raw_address)
+        if zip_match:
+            address_dict["zip"] = zip_match.group(0)
+        else:
+            # Default postal code placeholder
+            address_dict["zip"] = "00000"
+        
+        # Ensure all required fields are present
+        required_fields = ["street", "city", "state", "zip", "country"]
+        if not all(field in address_dict for field in required_fields):
+            return None
+            
+        return address_dict
+
+    def _extract_order_notes(self, text: str, doc: spacy.tokens.Doc) -> Optional[str]:
+        """Extract additional notes for the order."""
+        # Look for notes indicators
+        notes_indicators = [
+            r'(?:with\s+)?notes?[\s:]+([^\.]+)',
+            r'(?:additional|special)\s+instructions?[\s:]+([^\.]+)',
+            r'please[\s:]+([^\.]+)',
+        ]
+        
+        for pattern in notes_indicators:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+        
+        return None 

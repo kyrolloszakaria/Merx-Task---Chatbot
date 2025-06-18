@@ -11,10 +11,12 @@ from app.models.conversations import (
 from app.models.users import User
 from app.schemas.chat import MessageCreate, ConversationCreate
 from app.schemas.users import UserCreate, UserModify
+from app.schemas.orders import OrderCreate
 from app.core.exceptions import ResourceNotFoundError, UserAlreadyExistsError
 from app.services.nlu import NLUService
 from app.services.users import UserService
 from app.services.products import ProductService
+from app.services.orders import OrderService
 from app.schemas.products import ProductSearchParams
 
 # Configure logging
@@ -27,6 +29,7 @@ class ChatService:
         self.nlu = NLUService()
         self.user_service = UserService(db)
         self.product_service = ProductService(db)
+        self.order_service = OrderService(db)
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     def update_conversation_context(self, conversation: Conversation, intent: Intent, params: Dict[str, Any] = None) -> None:
@@ -120,6 +123,29 @@ class ChatService:
                     "Find Dell XPS laptops"
                 ]
             },
+            Intent.CREATE_ORDER: {
+                "name": "create_order",
+                "description": "Create a new order with items",
+                "parameters": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "product_id": {"type": "integer"},
+                                "quantity": {"type": "integer", "minimum": 1}
+                            }
+                        }
+                    },
+                    "shipping_address": {"type": "string"},
+                    "notes": {"type": "string?"}
+                },
+                "examples": [
+                    "I want to order 2 of product #123",
+                    "Place order for 1x product 456 with shipping to 123 Main St",
+                    "Buy 3 pieces of item #789 and 1 of #101"
+                ]
+            },
             Intent.ORDER_STATUS: {
                 "name": "get_order_status",
                 "description": "Get the status of an order",
@@ -176,7 +202,7 @@ class ChatService:
         if confidence < 0.3 and current_context:
             stored_intent = Intent(current_context.get('current_intent'))
             # Check if we're in the middle of a multi-step interaction
-            if stored_intent in [Intent.MODIFY_USER, Intent.PRODUCT_SEARCH, Intent.ORDER_STATUS]:
+            if stored_intent in [Intent.MODIFY_USER, Intent.PRODUCT_SEARCH, Intent.ORDER_STATUS, Intent.CREATE_ORDER]:
                 intent = stored_intent
                 # Merge current parameters with context parameters
                 context_params = current_context.get('params', {})
@@ -315,6 +341,72 @@ class ChatService:
                         function_result = {"error": str(e)}
                         status = FunctionCallStatus.FAILED
                         bot_message.content = f"I apologize, but I encountered an error while searching for products: {str(e)}"
+                elif intent == Intent.CREATE_ORDER:
+                    if not conversation.user_id:
+                        raise ValueError("You must be logged in to place an order.")
+                    
+                    # Validate required parameters
+                    if not params.get('items'):
+                        bot_message.content = ("Please specify what you'd like to order. For example:\n"
+                                            "- 'Order 2 of product #123'\n"
+                                            "- 'Buy 1x item #456'\n"
+                                            "- 'Purchase 3 pieces of product #789'")
+                        self.db.add(bot_message)
+                        self.db.commit()
+                        self.db.refresh(bot_message)
+                        self.db.refresh(user_message)
+                        return user_message, bot_message
+                    
+                    if not params.get('shipping_address'):
+                        bot_message.content = "Please provide a shipping address for your order. In the format of: 123 Main St, Anytown, Country, zipcode"
+                        self.db.add(bot_message)
+                        self.db.commit()
+                        self.db.refresh(bot_message)
+                        self.db.refresh(user_message)
+                        return user_message, bot_message
+                    
+                    try:
+                        # Create order data
+                        order_data = OrderCreate(
+                            items=params['items'],
+                            shipping_address=params['shipping_address'],
+                            notes=params.get('notes')
+                        )
+                        
+                        # Create the order
+                        order = self.order_service.create_order(conversation.user_id, order_data)
+                        
+                        # Format the response
+                        function_result = {
+                            "order_id": order.id,
+                            "total_amount": order.total_amount,
+                            "status": order.status.value,
+                            "items": [
+                                {
+                                    "product_id": item.product_id,
+                                    "quantity": item.quantity,
+                                    "unit_price": item.unit_price,
+                                    "total_price": item.total_price
+                                }
+                                for item in order.items
+                            ]
+                        }
+                        status = FunctionCallStatus.COMPLETED
+                        
+                        # Generate success message
+                        bot_message.content = (
+                            f"Great! I've placed your order (#{order.id}). "
+                            f"The total amount is ${order.total_amount:.2f}. "
+                            f"Your order status is {order.status.value}. "
+                            "You can check your order status anytime by saying "
+                            f"'check order #{order.id}'."
+                        )
+                        
+                    except ValueError as e:
+                        logger.error(f"Error during order creation: {str(e)}")
+                        function_result = {"error": str(e)}
+                        status = FunctionCallStatus.FAILED
+                        bot_message.content = f"I apologize, but I couldn't create your order: {str(e)}"
                 else:
                     # Handle other function calls here
                     function_result = None
@@ -471,6 +563,24 @@ class ChatService:
             
             return f"I'll update your profile information..."
         
+        elif intent == Intent.CREATE_ORDER:
+            if not self.conversation.user_id:
+                return "You need to be logged in to place an order. Would you like to log in first?"
+            
+            items = params.get('items', [])
+            shipping_address = params.get('shipping_address')
+            
+            if not items:
+                return ("I can help you place an order! Please tell me what you'd like to order using product IDs. For example:\n"
+                       "- 'Order 2 of product #123'\n"
+                       "- 'Buy 1x item #456'\n"
+                       "- 'Purchase 3 pieces of product #789'")
+            
+            if not shipping_address:
+                return "Where would you like your order to be shipped?"
+            
+            return "I'll help you place your order..."
+        
         return "I'm not sure I understand. Could you please rephrase that or ask for help?"
 
     def end_conversation(self, conversation_id: int) -> Conversation:
@@ -562,9 +672,9 @@ class ChatService:
         
         message += ":\n\n"
         
-        # Add product details
+        # Add product details with product IDs
         for i, product in enumerate(products, 1):
-            message += (f"{i}. {product['name']} - ${product['price']:.2f} "
+            message += (f"{i}. {product['name']} (Product #{product['id']}) - ${product['price']:.2f} "
                        f"({'In Stock' if product['in_stock'] else 'Out of Stock'})\n")
         
         # Add pagination info if necessary
@@ -573,5 +683,11 @@ class ChatService:
             message += f"\nShowing page {current_page} of {total_pages}. "
             if current_page < total_pages:
                 message += "You can ask for the next page to see more results."
+        
+        # Add ordering instructions
+        message += "\n\nTo order any product, you can say something like:"
+        message += f"\n• 'Order 2 of product #{products[0]['id']}'"
+        if len(products) > 1:
+            message += f"\n• 'Buy 1 of #{products[1]['id']} and 3 of #{products[0]['id']}'"
         
         return message 
