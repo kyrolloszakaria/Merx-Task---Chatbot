@@ -3,7 +3,7 @@
 A modern chatbot API built with FastAPI, featuring e-commerce capabilities and advanced Natural Language Understanding (NLU). 
 Implemented as a personal assistant for a Laptops and Accessories store, with sophisticated product search and order management capabilities.
 
-## Deliverables
+## Repository Components
 
 1. Full code base in this repository
 2. Docker image available on Docker Hub:
